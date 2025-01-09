@@ -1,4 +1,4 @@
-import { findLyrics } from '../src'
+import { findLyrics, getSynced } from '../src'
 
 test("get song lyrics", async () => {
     const result = await findLyrics({
@@ -25,4 +25,15 @@ test("get song lyrics", async () => {
     // Optionally, validate specific details
     expect(result.plainLyrics.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
     expect(result.syncedLyrics.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
+});
+
+test("get synced and unsynced lyrics", async() =>{
+    const result = await getSynced({
+        track_name: "The Chain",
+        artist_name: "Fleetwood Mac"
+    });
+    const expectedResult = {
+        
+    }
+    expect(result).toEqual(expect.objectContaining(expectedResult));
 });

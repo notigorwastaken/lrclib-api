@@ -44,7 +44,7 @@ export async function findLyrics(info: Query) {
         };
     }
 }
-async function getUnsynced(info: Query) {
+export async function getUnsynced(info: Query) {
     const body = await findLyrics(info);
     const unsyncedLyrics = body?.plainLyrics;
     const isInstrumental = body.instrumental;
@@ -55,7 +55,7 @@ async function getUnsynced(info: Query) {
     return parseLocalLyrics(unsyncedLyrics).unsynced;
 }
 
-async function getSynced(info: Query) {
+export async function getSynced(info: Query) {
     const body = await findLyrics(info);
     const syncedLyrics = body?.syncedLyrics;
     const isInstrumental = body.instrumental;
