@@ -1,7 +1,7 @@
-import Query from "./interfaces/Query";
-import { parseLocalLyrics } from "./interfaces/Utils";
+import { FindLyricsResponse, Query } from "./interfaces/Query";
+import { KaraokeLine, KaraokeLyric, LyricLine, parseLocalLyrics } from "./interfaces/Utils";
 
-export async function findLyrics(info: Query) {
+export async function findLyrics(info: Query): Promise<FindLyricsResponse> {
     const baseURL = "https://lrclib.net/api/get";
     const durr = info?.duration ? info.duration / 1000 : undefined;
     const params = {
@@ -22,30 +22,23 @@ export async function findLyrics(info: Query) {
 
         // Verifica o status da resposta
         if (!response.ok) {
-            return {
-                status: response.statusText,
-                error: "Request error: Track wasn't found",
-                debug: await response.text(),
-            };
+            throw new Error("Request error: Track wasn't found");
         }
 
         // Retorna os dados JSON
         return await response.json();
     } catch (error: unknown) {
         if (error instanceof Error) {
-            return {
-                status: "Network Error",
-                error: error.message,
-            };
+            throw new Error(error.message);
         }
-        return {
-            status: "Unknown Error",
-            error: "An unexpected error occurred",
-        };
+         throw new Error("Unknown Error")
     }
 }
-export async function getUnsynced(info: Query) {
+export async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
+    try {
     const body = await findLyrics(info);
+    if ("error" in body) return null;
+
     const unsyncedLyrics = body?.plainLyrics;
     const isInstrumental = body.instrumental;
     if (isInstrumental) return [{ text: "♪ Instrumental ♪" }];
@@ -53,9 +46,14 @@ export async function getUnsynced(info: Query) {
     if (!unsyncedLyrics) return null;
 
     return parseLocalLyrics(unsyncedLyrics).unsynced;
+    } catch(e) {
+        console.error(e);
+        return null;
+    }
 }
 
-export async function getSynced(info: Query) {
+export async function getSynced(info: Query): Promise<LyricLine[] | null> {
+    try {
     const body = await findLyrics(info);
     const syncedLyrics = body?.syncedLyrics;
     const isInstrumental = body.instrumental;
@@ -64,4 +62,8 @@ export async function getSynced(info: Query) {
     if (!syncedLyrics) return null;
 
     return parseLocalLyrics(syncedLyrics).synced;
+    } catch(e) {
+        console.error(e);
+        return null;
+    }
 }

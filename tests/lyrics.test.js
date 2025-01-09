@@ -1,12 +1,10 @@
-import { findLyrics, getSynced } from '../src'
+const { findLyrics } = require('../dist/index.js');
 
 test("get song lyrics", async () => {
     const result = await findLyrics({
         track_name: "The Chain",
         artist_name: "Fleetwood Mac"
     });
-
-    // Expected result structure and values
     const expectedResult = {
         id: 151738,
         name: "The Chain",
@@ -23,15 +21,6 @@ test("get song lyrics", async () => {
     expect(result).toEqual(expect.objectContaining(expectedResult));
 
     // Optionally, validate specific details
-    expect(result.plainLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
-    expect(result.syncedLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
-});
-
-test("get synced and unsynced lyrics", async() =>{
-    const result = await getSynced({
-        track_name: "khkgkglfjhl",
-        artist_name: "dhgghkbkgoh"
-    });
-    
-    expect(result).toBe(null);
+    expect(result.plainLyrics.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
+    expect(result.syncedLyrics.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
 });

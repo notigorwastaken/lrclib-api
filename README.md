@@ -28,11 +28,12 @@ npm install lrclib-api
 
 ### Basic Example
 
-```ts
-import { findLyrics, getSynced, getUnsynced } from "lrclib-api";
+#### JavaScript
+```js
+const { findLyrics, getSynced, getUnsynced } = require("lrclib-api");
 
-(async () => {
-    const query = {
+(async() => {
+  const query = {
         track_name: "The Chain",
         artist_name: "Fleetwood Mac",
     };
@@ -48,6 +49,25 @@ import { findLyrics, getSynced, getUnsynced } from "lrclib-api";
 })();
 ```
 
+#### ES Module
+```ts
+import { findLyrics, getSynced, getUnsynced } from "lrclib-api";
+
+const query = {
+        track_name: "The Chain",
+        artist_name: "Fleetwood Mac",
+};
+
+const lyrics = await findLyrics(query);
+console.log("Metadata:", lyrics);
+
+const unsyncedLyrics = await getUnsynced(query);
+console.log("Unsynced Lyrics:", unsyncedLyrics);
+
+const syncedLyrics = await getSynced(query);
+console.log("Synced Lyrics:", syncedLyrics);
+```
+
 ---
 
 ## API Reference
@@ -61,7 +81,7 @@ Fetches lyrics and metadata for a specific song.
     ```ts
     type Query = {
         track_name: string;
-        artist_name?: string; // Optional
+        artist_name: string;
         album_name?: string;  // Optional
         duration?: number;    // Optional, in milliseconds
     };
