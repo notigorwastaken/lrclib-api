@@ -1,6 +1,6 @@
 {
   "name": "lrclib-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The unofficial lrclib.net library for JS and TS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -12,8 +12,13 @@
     "build": "tsup",
     "test": "jest"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "music",
+    "lyrics",
+    "api",
+    "lrclib"
+  ],
+  "author": "Igor Figueiredo",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^29.5.14",
