@@ -2,13 +2,20 @@ import { FindLyricsResponse, Query, Search } from "./interfaces/Query";
 import { LyricLine, parseLocalLyrics } from "./interfaces/Utils";
 
 /**
- * This function sends request to https://lrclib.net/api/search
- * 
- * Example:
- * ```js
+ * Sends a request to the lyrics search API at https://lrclib.net/api/search.
+ *
+ * Example Usage:
+ * ```typescript
  * const search = await searchLyrics({ query: "The Chain" });
  * ```
- * Should return {@link FindLyricsResponse | `FindLyricsResponse[]`}
+ *
+ * @param info - An object containing search parameters:
+ *  - `query`: The search term (e.g., song title or lyrics fragment).
+ *  - `track_name`: The name of the track (optional).
+ *  - `artist_name`: The artist's name (optional).
+ *  - `duration`: The song duration in milliseconds (optional).
+ * 
+ * @returns A promise that resolves to an array of {@link FindLyricsResponse | FindLyricsResponse[]}.
  */
 async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
     const baseURL = "https://lrclib.net/api/search";
@@ -38,18 +45,6 @@ async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
     }
 }
 
-/** 
- * This function sends request to https://lrclib.net/api/get or https://lrclib.net/api/get/:id
- * 
- * Example:
- * ```js
- * const lyrics = await findLyrics({
- *   track_name: "The Chain",
- *   artist_name: "Fleetwood Mac"
- * });
- * ```
- * Should return {@link FindLyricsResponse | `FindLyricsResponse[]`}
-*/
 async function findLyrics(info: Query): Promise<FindLyricsResponse> {
     const parseID = info.id?`/${info.id}`:"?"
     const baseURL = "https://lrclib.net/api/get"+parseID;
@@ -81,15 +76,6 @@ async function findLyrics(info: Query): Promise<FindLyricsResponse> {
     }
 }
 
-/**
- * This function reuses `findLyrics()` to get plain lyrics
- * 
- * Example:
- * ```js
- * const unsynced = await getUnsynced({ track_name: "The Chain", artist_name: "Fleetwood Mac" })
- * ```
- * Should return {@link FindLyricsResponse | `LyricLine[]`} or `[null](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null)`
- */
 async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
     try {
         const body = await findLyrics(info);

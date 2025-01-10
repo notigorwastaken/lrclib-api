@@ -18,6 +18,10 @@
     "api",
     "lrclib"
   ],
+  "homepage": "https://lrclib.js.org",
+  "repository": {
+    "url": "https://github.com/igorwastaken/lrclib-api"
+  },
   "author": "Igor Figueiredo",
   "license": "ISC",
   "devDependencies": {

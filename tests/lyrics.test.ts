@@ -26,6 +26,7 @@ describe("song lyrics", () => {
         // Optionally, validate specific details
         expect(result.plainLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
         expect(result.syncedLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
+        console.log(result);
     });
 
     test("get synced and unsynced lyrics", async () => {
@@ -35,6 +36,7 @@ describe("song lyrics", () => {
         });
 
         expect(result).toBeNull();
+        console.log(result)
     });
 });
 describe("search song lyrics", () => {
@@ -56,6 +58,7 @@ describe("search song lyrics", () => {
         }];
 
         expect(result).toEqual(expect.arrayContaining(expectedResult));
+        console.log(result)
     })
 
     test("get song lyrics by id", async () => {

@@ -1,84 +1,115 @@
+
+// Represents a single line of lyrics with optional timing information
 type LyricLine = {
-    text: string;
-    startTime?: number; // Optional for unsynced lyrics
+    text: string;       // The lyric text
+    startTime?: number; // Optional timestamp indicating when this line starts in the song
 };
 
+// Represents a single word in a karaoke line with its timing
 type KaraokeLine = {
-    word: string;
-    time: number; // Relative time in ms
+    word: string;       // A single word from the lyrics
+    time: number;       // Timestamp when this word is sung
 };
 
+// Represents a full karaoke lyric line with multiple words and an overall start time
 type KaraokeLyric = {
-    text: KaraokeLine[];
-    startTime: number;
+    text: KaraokeLine[]; // Array of words and their timings
+    startTime: number;   // Timestamp indicating when the line starts in the song
 };
 
+/**
+ * Represents parsed lyrics in different formats:
+ * - `synced`: Array of lyric lines with start times (null if not available)
+ * - `unsynced`: Array of lyric lines without timing information
+ * - `karaoke`: Array of karaoke-style lyrics with word-level timings (null if not available)
+ */
 type ParsedLyrics = {
-    synced: LyricLine[] | null;
-    unsynced: LyricLine[];
-    karaoke: KaraokeLyric[] | null;
+    synced: LyricLine[] | null;     // Synchronized lyrics
+    unsynced: LyricLine[];          // Unsynchronized lyrics
+    karaoke: KaraokeLyric[] | null; // Karaoke-style lyrics
 };
 
+/**
+ * Parses song lyrics into a structured format by removing metadata tags and separating lines.
+ * 
+ * Example Input:
+ * ```
+ * [00:27.93] Listen to the wind blow
+ * [00:30.88] Watch the sun rise
+ * ```
+ * 
+ * Example Output:
+ * {
+ *   synced: [{ text: "Listen to the wind blow", startTime: 27930 }, { text: "Watch the sun rise", startTime: 30880 }],
+ *   unsynced: [],
+ *   karaoke: null
+ * }
+ * 
+ * @param lyrics - The raw lyrics string with optional tags and timestamps
+ * @returns A ParsedLyrics object containing structured lyric data
+ */
 function parseLocalLyrics(lyrics: string): ParsedLyrics {
-    // Preprocess lyrics by removing [tags] and empty lines
+    // Preprocess lyrics by removing [tags] (e.g., [artist:Name]) and trimming extra whitespace
     const lines = lyrics
-        .replace(/\[[a-zA-Z]+:.+\]/g, "") // Removes metadata tags
+        .replace(/\[[a-zA-Z]+:.+\]/g, "") // Removes metadata tags like [artist:Name]
         .trim()
-        .split("\n");
+        .split("\n");                      // Splits the lyrics into an array of lines
 
-    const syncedTimestamp = /\[([0-9:.]+)\]/;
-    const karaokeTimestamp = /\<([0-9:.]+)\>/;
+    // Regular expressions for matching synced and karaoke timestamps
+    const syncedTimestamp = /\[([0-9:.]+)\]/;  // Matches [00:12.34]
+    const karaokeTimestamp = /\<([0-9:.]+)\>/; // Matches <00:12.34>
 
-    const unsynced: LyricLine[] = [];
-    const isSynced = !!lines[0].match(syncedTimestamp);
-    const synced: LyricLine[] | null = isSynced ? [] : null;
+    const unsynced: LyricLine[] = []; // Array to store unsynchronized lyrics
+    const synced: LyricLine[] = [];   // Array to store synchronized lyrics
+    const karaoke: KaraokeLyric[] = []; // Array to store karaoke-style lyrics
 
-    const isKaraoke = !!lines[0].match(karaokeTimestamp);
-    const karaoke: KaraokeLyric[] | null = isKaraoke ? [] : null;
-
-    function timestampToMs(timestamp: string): number {
-        const [minutes, seconds] = timestamp.replace(/[<>\[\]]/g, "").split(":");
-        return Number(minutes) * 60 * 1000 + Number(seconds) * 1000;
-    }
-
-    function parseKaraokeLine(line: string, startTime: string): KaraokeLine[] {
-        let wordTime = timestampToMs(startTime);
-        const karaokeLine: KaraokeLine[] = [];
-        const karaokeMatches = line.matchAll(/(\S+ ?)\<([0-9:.]+)\>/g);
-        for (const match of karaokeMatches) {
-            const word = match[1];
-            const time = match[2];
-            karaokeLine.push({ word, time: timestampToMs(time) - wordTime });
-            wordTime = timestampToMs(time);
-        }
-        return karaokeLine;
-    }
-
-    for (const [i, line] of lines.entries()) {
-        const time = line.match(syncedTimestamp)?.[1] ?? null;
-        let lyricContent = line.replace(syncedTimestamp, "").trim();
-        const lyric = lyricContent.replace(/\<([0-9:.]+)\>/g, "").trim();
-
-        if (line.trim() !== "") {
-            if (isKaraoke && karaoke) {
-                if (!lyricContent.endsWith(">")) {
-                    // Adds end time if missing
-                    const endTime =
-                        lines[i + 1]?.match(syncedTimestamp)?.[1] ??
-                        "00:00"; // Default to "00:00" if no duration available
-                    lyricContent += `<${endTime}>`;
-                }
-                const karaokeLine = parseKaraokeLine(lyricContent, time!);
-                karaoke.push({ text: karaokeLine, startTime: timestampToMs(time!) });
+    // Process each line to extract lyrics and timing information
+    lines.forEach(line => {
+        // Match synchronized lyrics
+        const syncMatch = line.match(syncedTimestamp);
+        if (syncMatch) {
+            const startTime = parseTime(syncMatch[1]);
+            const text = line.replace(syncedTimestamp, "").trim();
+            if (text) {
+                synced.push({ text, startTime });
             }
-            if (isSynced && time && synced) {
-                synced.push({ text: lyric || "♪", startTime: timestampToMs(time) });
-            }
-            unsynced.push({ text: lyric || "♪" });
         }
-    }
+        // Match karaoke lyrics (e.g., <00:12.34>word)
+        else if (karaokeTimestamp.test(line)) {
+            const words = line.split(" ").map(word => {
+                const match = word.match(karaokeTimestamp);
+                return {
+                    word: word.replace(karaokeTimestamp, ""),
+                    time: match ? parseTime(match[1]) : 0,
+                };
+            });
+            karaoke.push({ text: words, startTime: words[0].time });
+        }
+        // Add to unsynchronized lyrics if no timestamps are found
+        else {
+            const text = line.trim();
+            if (text) {
+                unsynced.push({ text });
+            }
+        }
+    });
 
-    return { synced, unsynced, karaoke };
+    return {
+        synced: synced.length > 0 ? synced : null,
+        unsynced,
+        karaoke: karaoke.length > 0 ? karaoke : null,
+    };
+}
+
+/**
+ * Converts a timestamp string in the format "mm:ss" or "mm:ss.SSS" to a number in seconds.
+ * 
+ * @param time - The timestamp string to parse
+ * @returns The time in seconds as a number
+ */
+function parseTime(time: string): number {
+    const [minutes, seconds] = time.split(":").map(Number);
+    return minutes * 60 + seconds;
 }
 
 export {
@@ -86,5 +117,6 @@ export {
     KaraokeLine,
     KaraokeLyric,
     ParsedLyrics,
+    parseTime,
     parseLocalLyrics
 }
