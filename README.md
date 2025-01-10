@@ -1,5 +1,3 @@
-# lrclib-api
-
 **lrclib-api** is a TypeScript-based wrapper for the [lrclib.net](https://lrclib.net) API, designed to fetch song lyrics and metadata. It supports both plain and synchronized lyrics, providing a simple and type-safe interface for integration with your music applications.
 
 ---
@@ -67,72 +65,6 @@ console.log("Unsynced Lyrics:", unsyncedLyrics);
 const syncedLyrics = await getSynced(query);
 console.log("Synced Lyrics:", syncedLyrics);
 ```
-
----
-
-## API Reference
-
-### `findLyrics(query: Query): Promise<FindLyricsResponse>`
-
-Fetches lyrics and metadata for a specific song.
-
-- **Parameters**:
-  - `query`: An object of type `Query`:
-    ```ts
-    type Query = {
-        track_name: string;
-        artist_name: string;
-        album_name?: string;  // Optional
-        duration?: number;    // Optional, in milliseconds
-    };
-    ```
-
-- **Returns**:
-  A `Promise` resolving to a `FindLyricsResponse` object:
-  ```ts
-  type FindLyricsResponse = {
-      id: number;
-      name: string;
-      trackName: string;
-      artistName: string;
-      albumName: string;
-      duration: number; // Duration in seconds
-      instrumental: boolean; // True if the track is instrumental
-      plainLyrics: string | null; // Plain (unsynced) lyrics
-      syncedLyrics: string | null; // Timed lyrics
-  };
-  ```
-
----
-
-### `getUnsynced(query: Query): Promise<LyricLine[] | null>`
-
-Fetches unsynced (plain) lyrics for a specific song.
-
-- **Returns**:
-  - An array of `LyricLine` objects:
-    ```ts
-    type LyricLine = {
-        text: string;
-    };
-    ```
-  - `null` if no plain lyrics are available.
-
----
-
-### `getSynced(query: Query): Promise<LyricLine[] | null>`
-
-Fetches synchronized (timed) lyrics for a specific song.
-
-- **Returns**:
-  - An array of `LyricLine` objects:
-    ```ts
-    type LyricLine = {
-        text: string;
-        startTime?: number; // Optional timestamp in milliseconds
-    };
-    ```
-  - `null` if no synced lyrics are available.
 
 ---
 

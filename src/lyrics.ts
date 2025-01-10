@@ -1,6 +1,15 @@
 import { FindLyricsResponse, Query, Search } from "./interfaces/Query";
 import { LyricLine, parseLocalLyrics } from "./interfaces/Utils";
 
+/**
+ * This function sends request to https://lrclib.net/api/search
+ * 
+ * Example:
+ * ```js
+ * const search = await searchLyrics({ query: "The Chain" });
+ * ```
+ * Should return {@link FindLyricsResponse | `FindLyricsResponse[]`}
+ */
 async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
     const baseURL = "https://lrclib.net/api/search";
     const params = {
@@ -16,12 +25,10 @@ async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
     try {
         const response = await fetch(finalURL);
 
-        // Verifica o status da resposta
         if (!response.ok) {
             throw new Error("Request error: Track wasn't found");
         }
 
-        // Retorna os dados JSON
         return await response.json();
     } catch (error: unknown) {
         if (error instanceof Error) {
@@ -31,6 +38,18 @@ async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
     }
 }
 
+/** 
+ * This function sends request to https://lrclib.net/api/get or https://lrclib.net/api/get/:id
+ * 
+ * Example:
+ * ```js
+ * const lyrics = await findLyrics({
+ *   track_name: "The Chain",
+ *   artist_name: "Fleetwood Mac"
+ * });
+ * ```
+ * Should return {@link FindLyricsResponse | `FindLyricsResponse[]`}
+*/
 async function findLyrics(info: Query): Promise<FindLyricsResponse> {
     const parseID = info.id?`/${info.id}`:"?"
     const baseURL = "https://lrclib.net/api/get"+parseID;
@@ -42,7 +61,6 @@ async function findLyrics(info: Query): Promise<FindLyricsResponse> {
         duration: durr || "",
     };
 
-    // Constrói a URL com validação adicional
     const finalURL = `${baseURL}${Object.entries(params)
         .filter(([_, value]) => value !== undefined && value !== "")
         .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
@@ -51,20 +69,27 @@ async function findLyrics(info: Query): Promise<FindLyricsResponse> {
     try {
         const response = await fetch(finalURL);
 
-        // Verifica o status da resposta
         if (!response.ok) {
             throw new Error("Request error: Track wasn't found");
         }
 
-        // Retorna os dados JSON
         return await response.json();
     } catch (error: any) {
         if(!error) throw new Error("Unknown Error");
 
         throw error?.message;
-       // throw new Error("Unknown Error")
     }
 }
+
+/**
+ * This function reuses `findLyrics()` to get plain lyrics
+ * 
+ * Example:
+ * ```js
+ * const unsynced = await getUnsynced({ track_name: "The Chain", artist_name: "Fleetwood Mac" })
+ * ```
+ * Should return {@link FindLyricsResponse | `LyricLine[]`} or `[null](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null)`
+ */
 async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
     try {
         const body = await findLyrics(info);
