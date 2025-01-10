@@ -1,6 +1,6 @@
 {
   "name": "lrclib-api",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "The unofficial lrclib.net library for JS and TS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
