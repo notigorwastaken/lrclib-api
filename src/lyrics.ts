@@ -10,8 +10,8 @@ import { LyricLine, parseLocalLyrics } from "./interfaces/Utils";
  * ```
  *
  * @param info - An object containing search parameters:
- *  - `query`: The search term (e.g., song title or lyrics fragment).
- *  - `track_name`: The name of the track (optional).
+ *  - `query`: The search term (conditional | e.g., song title or lyrics fragment).
+ *  - `track_name`: The name of the track (conditional).
  *  - `artist_name`: The artist's name (optional).
  *  - `duration`: The song duration in milliseconds (optional).
  * 
@@ -45,9 +45,27 @@ async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
     }
 }
 
+/**
+ * Finds lyrics for a given track using the API at https://lrclib.net/api/get.
+ *
+ * Example Usage:
+ * ```typescript
+ * const lyrics = await findLyrics({ track_name: "The Chain", artist_name: "Fleetwood Mac" });
+ * ```
+ *
+ * @param info - An object containing query parameters:
+ *  - `id`: The unique identifier of the track (conditional).
+ *  - `track_name`: The name of the track (conditional).
+ *  - `artist_name`: The artist's name (conditional).
+ *  - `album_name`: The album's name (optional).
+ *  - `duration`: The song duration in milliseconds (optional).
+ *
+ * @returns A promise that resolves to a {@link FindLyricsResponse | FindLyricsResponse} object containing the track's lyrics.
+ * @throws Will throw an error if the request fails or the track is not found.
+ */
 async function findLyrics(info: Query): Promise<FindLyricsResponse> {
-    const parseID = info.id?`/${info.id}`:"?"
-    const baseURL = "https://lrclib.net/api/get"+parseID;
+    const parseID = info.id ? `/${info.id}` : "?"
+    const baseURL = "https://lrclib.net/api/get" + parseID;
     const durr = info?.duration ? info.duration / 1000 : undefined;
     const params = {
         track_name: info.track_name || "",
@@ -70,12 +88,30 @@ async function findLyrics(info: Query): Promise<FindLyricsResponse> {
 
         return await response.json();
     } catch (error: any) {
-        if(!error) throw new Error("Unknown Error");
+        if (!error) throw new Error("Unknown Error");
 
         throw error?.message;
     }
 }
 
+/**
+ * Retrieves unsynchronized (plain) lyrics for a given track.
+ *
+ * Example Usage:
+ * ```typescript
+ * const unsyncedLyrics = await getUnsynced({ track_name: "The Chain", artist_name: "Fleetwood Mac" });
+ * ```
+ *
+ * @param info - An object containing query parameters:
+ *  - `id`: The unique identifier of the track (conditional).
+ *  - `track_name`: The name of the track (conditional).
+ *  - `artist_name`: The artist's name (conditional).
+ *  - `album_name`: The album's name (optional).
+ *  - `duration`: The song duration in milliseconds (optional).
+ *
+ * @returns A promise that resolves to an array of {@link LyricLine | LyricLine[]} objects
+ *          containing unsynchronized lyrics or `null` if no lyrics are found.
+ */
 async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
     try {
         const body = await findLyrics(info);
@@ -94,6 +130,24 @@ async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
     }
 }
 
+/**
+ * Retrieves synchronized (timed) lyrics for a given track.
+ *
+ * Example Usage:
+ * ```typescript
+ * const syncedLyrics = await getSynced({ track_name: "The Chain", artist_name: "Fleetwood Mac" });
+ * ```
+ *
+ * @param info - An object containing query parameters:
+ *  - `id`: The unique identifier of the track (conditional).
+ *  - `track_name`: The name of the track (conditional).
+ *  - `artist_name`: The artist's name (conditional).
+ *  - `album_name`: The album's name (optional).
+ *  - `duration`: The song duration in milliseconds (optional).
+ *
+ * @returns A promise that resolves to an array of {@link LyricLine | LyricLine[]} objects
+ *          containing synchronized lyrics or `null` if no lyrics are found.
+ */
 async function getSynced(info: Query): Promise<LyricLine[] | null> {
     try {
         const body = await findLyrics(info);
