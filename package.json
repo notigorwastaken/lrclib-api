@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup && typedoc --plugin typedoc-github-theme",
+    "build": "tsup && typedoc --plugin typedoc-github-theme --cname lrclib.js.org",
     "test": "jest"
   },
   "keywords": [
