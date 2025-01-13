@@ -32,7 +32,13 @@ type FindLyricsResponse = {
     instrumental: boolean;
     plainLyrics: string | null;
     syncedLyrics: string | null;
-};
+} & ErrorResponse;
+
+type ErrorResponse = {
+    code: number;
+    name: string;
+    message: string;
+}
 
 /**
  * Defines the parameters for searching lyrics.
@@ -57,6 +63,7 @@ type SearchType = | {
 
 export {
     Query,
+    ErrorResponse,
     FindLyricsResponse,
     SearchType,
     Search

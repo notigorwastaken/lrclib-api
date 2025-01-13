@@ -119,7 +119,7 @@ async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
 
         const unsyncedLyrics = body?.plainLyrics;
         const isInstrumental = body.instrumental;
-        if (isInstrumental) return [{ text: "♪ Instrumental ♪" }];
+        if (isInstrumental) return [{ text: "[Instrumental]" }];
 
         if (!unsyncedLyrics) return null;
 
@@ -153,7 +153,7 @@ async function getSynced(info: Query): Promise<LyricLine[] | null> {
         const body = await findLyrics(info);
         const syncedLyrics = body?.syncedLyrics;
         const isInstrumental = body.instrumental;
-        if (isInstrumental) return [{ text: "♪ Instrumental ♪" }];
+        if (isInstrumental) return [{ text: "[Instrumental]" }];
 
         if (!syncedLyrics) return null;
 
