@@ -1,6 +1,4 @@
-**lrclib-api** is a TypeScript-based wrapper for the [lrclib.net](https://lrclib.net) API, designed to fetch song lyrics and metadata. It supports both plain and synchronized lyrics, providing a simple and type-safe interface for integration with your music applications.
-
----
+**lrclib-api** is a TypeScript-based wrapper for the [lrclib.net](https://lrclib.net) API, designed to fetch song lyrics and metadata. It supports both plain and synchronized lyrics, providing a simple and efficient way to access lyrics data.
 
 ## Features
 
@@ -10,8 +8,6 @@
 - Provides metadata such as track name, artist, album, and duration.
 - Fully type-safe with TypeScript.
 
----
-
 ## Installation
 
 Install the package via npm:
@@ -20,40 +16,40 @@ Install the package via npm:
 npm install lrclib-api
 ```
 
----
-
 ## Usage
 
 ### Basic Example
 
 #### JavaScript
+
 ```js
 const { findLyrics, getSynced, getUnsynced } = require("lrclib-api");
 
 (async() => {
   const query = {
-        track_name: "The Chain",
-        artist_name: "Fleetwood Mac",
-    };
+    track_name: "The Chain",
+    artist_name: "Fleetwood Mac",
+  };
 
-    const lyrics = await findLyrics(query);
-    console.log("Metadata:", lyrics);
+  const lyrics = await findLyrics(query);
+  console.log("Metadata:", lyrics);
 
-    const unsyncedLyrics = await getUnsynced(query);
-    console.log("Unsynced Lyrics:", unsyncedLyrics);
+  const unsyncedLyrics = await getUnsynced(query);
+  console.log("Unsynced Lyrics:", unsyncedLyrics);
 
-    const syncedLyrics = await getSynced(query);
-    console.log("Synced Lyrics:", syncedLyrics);
+  const syncedLyrics = await getSynced(query);
+  console.log("Synced Lyrics:", syncedLyrics);
 })();
 ```
 
 #### ES Module
+
 ```ts
 import { findLyrics, getSynced, getUnsynced } from "lrclib-api";
 
 const query = {
-        track_name: "The Chain",
-        artist_name: "Fleetwood Mac",
+  track_name: "The Chain",
+  artist_name: "Fleetwood Mac",
 };
 
 const lyrics = await findLyrics(query);
@@ -65,8 +61,6 @@ console.log("Unsynced Lyrics:", unsyncedLyrics);
 const syncedLyrics = await getSynced(query);
 console.log("Synced Lyrics:", syncedLyrics);
 ```
-
----
 
 ## Example Response
 
@@ -104,8 +98,6 @@ console.log("Synced Lyrics:", syncedLyrics);
 ]
 ```
 
----
-
 ## Running Tests
 
 To run the test suite:
@@ -126,8 +118,6 @@ To run the test suite:
    npm test
    ```
 
----
-
 ## Contributing
 
 Contributions are welcome! Here's how you can help:
@@ -147,13 +137,9 @@ Contributions are welcome! Here's how you can help:
    ```
 5. Open a pull request.
 
----
-
 ## License
 
 This project is licensed under the [ISC License](https://opensource.org/licenses/ISC).
-
----
 
 ## Links
 
