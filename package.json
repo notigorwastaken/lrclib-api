@@ -13,10 +13,10 @@
     "test": "jest",
     "lint": "prettier . --check",
     "format": "prettier --write .",
-    "docs": "typedoc",
+    "docs": "typedoc --plugin typedoc-github-theme --cname lrclib.js.org",
     "size": "size-limit",
-    "prepare": "husky install",
-    "prepublishOnly": "npm run lint && npm run test && npm run build"
+    "prepare": "husky",
+    "prepublishOnly": "npm run lint && npm run test && npm run build && npm run docs"
   },
   "keywords": [
     "music",
@@ -32,6 +32,7 @@
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/js": "^9.18.0",
+    "@size-limit/preset-small-lib": "^11.1.6",
     "@types/jest": "^29.5.14",
     "globals": "^15.14.0",
     "husky": "^9.1.7",
@@ -41,6 +42,7 @@
     "lint-staged": "^15.3.0",
     "markdownlint-cli": "^0.43.0",
     "prettier": "^3.4.2",
+    "size-limit": "^11.1.6",
     "standard-version": "^9.5.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
