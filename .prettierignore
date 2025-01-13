@@ -1,0 +1,7 @@
+docs
+dist
+.github
+node_modules
+.git
+.husky
+*.config.*

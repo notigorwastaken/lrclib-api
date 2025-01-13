@@ -9,8 +9,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup && typedoc --plugin typedoc-github-theme --cname lrclib.js.org",
-    "test": "jest"
+    "build": "tsup",
+    "test": "jest",
+    "lint": "prettier . --check",
+    "format": "prettier --write .",
+    "docs": "typedoc",
+    "size": "size-limit",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
   },
   "keywords": [
     "music",
@@ -23,14 +29,30 @@
   "author": "Igor Figueiredo",
   "license": "ISC",
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.18.0",
     "@types/jest": "^29.5.14",
+    "globals": "^15.14.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "jest-coverage-badges": "^1.0.0",
+    "jest-fetch-mock": "^3.0.3",
+    "lint-staged": "^15.3.0",
+    "markdownlint-cli": "^0.43.0",
+    "prettier": "^3.4.2",
+    "standard-version": "^9.5.0",
     "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsup": "^8.3.5",
     "typedoc": "^0.27.6",
     "typedoc-github-theme": "^0.2.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.1"
   },
-  "private": false
+  "private": false,
+  "dependencies": {
+    "tslib": "^2.8.1"
+  }
 }

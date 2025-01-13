@@ -14,35 +14,35 @@ import { LyricLine, parseLocalLyrics } from "./interfaces/Utils";
  *  - `track_name`: The name of the track (conditional).
  *  - `artist_name`: The artist's name (optional).
  *  - `duration`: The song duration in milliseconds (optional).
- * 
+ *
  * @returns A promise that resolves to an array of {@link FindLyricsResponse | FindLyricsResponse[]}.
  */
 async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
-    const baseURL = "https://lrclib.net/api/search";
-    const params = {
-        q: info.query || "",
-        track_name: info.track_name || "",
-        artist_name: info.artist_name || "",
-        duration: info.duration ? (info.duration / 1000) : ""
-    };
-    const finalURL = `${baseURL}?${Object.entries(params)
-        .filter(([_, value]) => value !== undefined && value !== "")
-        .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
-        .join("&")}`;
-    try {
-        const response = await fetch(finalURL);
+  const baseURL = "https://lrclib.net/api/search";
+  const params = {
+    q: info.query || "",
+    track_name: info.track_name || "",
+    artist_name: info.artist_name || "",
+    duration: info.duration ? info.duration / 1000 : "",
+  };
+  const finalURL = `${baseURL}?${Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
+    .join("&")}`;
+  try {
+    const response = await fetch(finalURL);
 
-        if (!response.ok) {
-            throw new Error("Request error: Track wasn't found");
-        }
-
-        return await response.json();
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            throw new Error(error.message);
-        }
-        throw new Error("Unknown Error")
+    if (!response.ok) {
+      throw new Error("Request error: Track wasn't found");
     }
+
+    return await response.json();
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Unknown Error");
+  }
 }
 
 /**
@@ -64,34 +64,34 @@ async function searchLyrics(info: Search): Promise<FindLyricsResponse[]> {
  * @throws Will throw an error if the request fails or the track is not found.
  */
 async function findLyrics(info: Query): Promise<FindLyricsResponse> {
-    const parseID = info.id ? `/${info.id}` : "?"
-    const baseURL = "https://lrclib.net/api/get" + parseID;
-    const durr = info?.duration ? info.duration / 1000 : undefined;
-    const params = {
-        track_name: info.track_name || "",
-        artist_name: info.artist_name || "",
-        album_name: info.album_name || "",
-        duration: durr || "",
-    };
+  const parseID = info.id ? `/${info.id}` : "?";
+  const baseURL = "https://lrclib.net/api/get" + parseID;
+  const durr = info?.duration ? info.duration / 1000 : undefined;
+  const params = {
+    track_name: info.track_name || "",
+    artist_name: info.artist_name || "",
+    album_name: info.album_name || "",
+    duration: durr || "",
+  };
 
-    const finalURL = `${baseURL}${Object.entries(params)
-        .filter(([_, value]) => value !== undefined && value !== "")
-        .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
-        .join("&")}`;
+  const finalURL = `${baseURL}${Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
+    .join("&")}`;
 
-    try {
-        const response = await fetch(finalURL);
+  try {
+    const response = await fetch(finalURL);
 
-        if (!response.ok) {
-            throw new Error("Request error: Track wasn't found");
-        }
-
-        return await response.json();
-    } catch (error: any) {
-        if (!error) throw new Error("Unknown Error");
-
-        throw error?.message;
+    if (!response.ok) {
+      throw new Error("Request error: Track wasn't found");
     }
+
+    return await response.json();
+  } catch (error: any) {
+    if (!error) throw new Error("Unknown Error");
+
+    throw error?.message;
+  }
 }
 
 /**
@@ -113,21 +113,21 @@ async function findLyrics(info: Query): Promise<FindLyricsResponse> {
  *          containing unsynchronized lyrics or `null` if no lyrics are found.
  */
 async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
-    try {
-        const body = await findLyrics(info);
-        if ("error" in body) return null;
+  try {
+    const body = await findLyrics(info);
+    if ("error" in body) return null;
 
-        const unsyncedLyrics = body?.plainLyrics;
-        const isInstrumental = body.instrumental;
-        if (isInstrumental) return [{ text: "[Instrumental]" }];
+    const unsyncedLyrics = body?.plainLyrics;
+    const isInstrumental = body.instrumental;
+    if (isInstrumental) return [{ text: "[Instrumental]" }];
 
-        if (!unsyncedLyrics) return null;
+    if (!unsyncedLyrics) return null;
 
-        return parseLocalLyrics(unsyncedLyrics).unsynced;
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
+    return parseLocalLyrics(unsyncedLyrics).unsynced;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }
 
 /**
@@ -149,24 +149,19 @@ async function getUnsynced(info: Query): Promise<LyricLine[] | null> {
  *          containing synchronized lyrics or `null` if no lyrics are found.
  */
 async function getSynced(info: Query): Promise<LyricLine[] | null> {
-    try {
-        const body = await findLyrics(info);
-        const syncedLyrics = body?.syncedLyrics;
-        const isInstrumental = body.instrumental;
-        if (isInstrumental) return [{ text: "[Instrumental]" }];
+  try {
+    const body = await findLyrics(info);
+    const syncedLyrics = body?.syncedLyrics;
+    const isInstrumental = body.instrumental;
+    if (isInstrumental) return [{ text: "[Instrumental]" }];
 
-        if (!syncedLyrics) return null;
+    if (!syncedLyrics) return null;
 
-        return parseLocalLyrics(syncedLyrics).synced;
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
+    return parseLocalLyrics(syncedLyrics).synced;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }
 
-export {
-    findLyrics,
-    getSynced,
-    getUnsynced,
-    searchLyrics
-}
+export { findLyrics, getSynced, getUnsynced, searchLyrics };

@@ -25,7 +25,7 @@ npm install lrclib-api
 ```js
 const { findLyrics, getSynced, getUnsynced } = require("lrclib-api");
 
-(async() => {
+(async () => {
   const query = {
     track_name: "The Chain",
     artist_name: "Fleetwood Mac",
@@ -83,10 +83,7 @@ console.log("Synced Lyrics:", syncedLyrics);
 ### Unsynced Lyrics Example
 
 ```json
-[
-  { "text": "Listen to the wind blow" },
-  { "text": "Watch the sun rise" }
-]
+[{ "text": "Listen to the wind blow" }, { "text": "Watch the sun rise" }]
 ```
 
 ### Synced Lyrics Example
@@ -103,12 +100,14 @@ console.log("Synced Lyrics:", syncedLyrics);
 To run the test suite:
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/igorwastaken/lrclib-api.git
    cd lrclib-api
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
