@@ -65,4 +65,20 @@ type SearchType =
       query?: never;
     };
 
-export { Query, ErrorResponse, FindLyricsResponse, SearchType, Search };
+type PublishLyrics = {
+  trackName: string;
+  artistName: string;
+  albumName: string;
+  duration: number;
+  plainLyrics: string;
+  syncedLyrics: string;
+};
+
+export {
+  Query,
+  ErrorResponse,
+  FindLyricsResponse,
+  SearchType,
+  Search,
+  PublishLyrics,
+};

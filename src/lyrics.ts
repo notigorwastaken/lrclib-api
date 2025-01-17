@@ -1,6 +1,11 @@
-import { NoResultError, NotFoundError, RequestError } from "./errors";
+import { KeyError, NoResultError, NotFoundError, RequestError } from "./errors";
 import { ClientOptions } from "./types/Client";
-import { FindLyricsResponse, Query, Search } from "./types/Lyrics";
+import {
+  FindLyricsResponse,
+  PublishLyrics,
+  Query,
+  Search,
+} from "./types/Lyrics";
 import { LyricLine } from "./types/Utils";
 import { parseLocalLyrics } from "./utils";
 
@@ -32,6 +37,23 @@ export class Client {
     options?: RequestInit,
   ): Promise<Response> {
     return await fetch(this._url + path, options);
+  }
+  private async post(
+    path: string,
+    body: any,
+    options?: RequestInit,
+  ): Promise<string> {
+    if (!this._key) throw new KeyError();
+    const response = await fetch(this._url + path, {
+      ...options,
+      headers: {
+        "X-Publish-Token": this._key,
+      },
+      body: JSON.stringify(body),
+      method: "post",
+    });
+    if (response.status !== 201) throw await response.json();
+    return await response.text();
   }
   /**
    * Sends a request to the lyrics search API at https://lrclib.net/api/search.
