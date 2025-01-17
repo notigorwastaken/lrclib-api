@@ -1,8 +1,9 @@
-import { findLyrics, getSynced, searchLyrics } from "../src";
+import { Client } from "../src";
 
 describe("song lyrics", () => {
+  const client = new Client();
   test("get song lyrics", async () => {
-    const result = await findLyrics({
+    const result = await client.findLyrics({
       track_name: "The Chain",
       artist_name: "Fleetwood Mac",
     });
@@ -34,7 +35,7 @@ describe("song lyrics", () => {
   });
 
   test("get synced and unsynced lyrics", async () => {
-    const result = await getSynced({
+    const result = await client.getSynced({
       track_name: "khkgkglfjhl",
       artist_name: "dhgghkbkgoh",
     });
@@ -44,8 +45,9 @@ describe("song lyrics", () => {
   });
 });
 describe("search song lyrics", () => {
+  const client = new Client();
   test("search song lyrics", async () => {
-    const result = await searchLyrics({
+    const result = await client.searchLyrics({
       query: "The Chain Fleetwood Mac",
     });
 
@@ -72,7 +74,7 @@ describe("search song lyrics", () => {
   });
 
   test("get song lyrics by id", async () => {
-    const result = await findLyrics({
+    const result = await client.findLyrics({
       id: 151738,
     });
 

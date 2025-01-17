@@ -23,21 +23,22 @@ npm install lrclib-api
 #### JavaScript
 
 ```js
-const { findLyrics, getSynced, getUnsynced } = require("lrclib-api");
+const { Client } = require("lrclib-api");
 
+const client = new Client();
 (async () => {
   const query = {
     track_name: "The Chain",
     artist_name: "Fleetwood Mac",
   };
 
-  const lyrics = await findLyrics(query);
+  const lyrics = await client.findLyrics(query);
   console.log("Metadata:", lyrics);
 
-  const unsyncedLyrics = await getUnsynced(query);
+  const unsyncedLyrics = await client.getUnsynced(query);
   console.log("Unsynced Lyrics:", unsyncedLyrics);
 
-  const syncedLyrics = await getSynced(query);
+  const syncedLyrics = await client.getSynced(query);
   console.log("Synced Lyrics:", syncedLyrics);
 })();
 ```
@@ -45,20 +46,21 @@ const { findLyrics, getSynced, getUnsynced } = require("lrclib-api");
 #### ES Module
 
 ```ts
-import { findLyrics, getSynced, getUnsynced } from "lrclib-api";
+import { Client } from "lrclib-api";
 
+const client = new Client();
 const query = {
   track_name: "The Chain",
   artist_name: "Fleetwood Mac",
 };
 
-const lyrics = await findLyrics(query);
+const lyrics = await client.findLyrics(query);
 console.log("Metadata:", lyrics);
 
-const unsyncedLyrics = await getUnsynced(query);
+const unsyncedLyrics = await client.getUnsynced(query);
 console.log("Unsynced Lyrics:", unsyncedLyrics);
 
-const syncedLyrics = await getSynced(query);
+const syncedLyrics = await client.getSynced(query);
 console.log("Synced Lyrics:", syncedLyrics);
 ```
 
