@@ -1,12 +1,16 @@
-**lrclib-api** is a TypeScript-based wrapper for the [lrclib.net](https://lrclib.net) API, designed to fetch song lyrics and metadata. It supports both plain and synchronized lyrics, providing a simple and efficient way to access lyrics data.
+[![npm version](https://img.shields.io/npm/v/lrclib-api.svg)](https://www.npmjs.com/package/lrclib-api)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+<!--[![Build Status](https://img.shields.io/travis/igorwastaken/lrclib-api.svg)](https://travis-ci.org/igorwastaken/lrclib-api)-->
+
+**lrclib-api** is a TypeScript wrapper for the [lrclib.net](https://lrclib.net) API. It provides a simple, type-safe way to fetch song lyrics and metadata, supporting both plain (unsynced) and synchronized (timed) lyrics.
 
 ## Features
 
-- Retrieve song lyrics by track name, artist name, and album name.
-- Supports both plain (unsynced) and synchronized (timed) lyrics.
-- Handles instrumental tracks gracefully.
-- Provides metadata such as track name, artist, album, and duration.
-- Fully type-safe with TypeScript.
+- **Easy Lyrics Retrieval:** Fetch song lyrics by track name, artist, or album.
+- **Dual Mode:** Supports both plain (unsynced) and synced (timed) lyrics.
+- **Instrumental Handling:** Gracefully handles instrumental tracks.
+- **Rich Metadata:** Returns track details including track name, artist, album, and duration.
+- **TypeScript First:** Enjoy complete type safety in your projects.
 
 ## Installation
 
@@ -26,42 +30,56 @@ npm install lrclib-api
 const { Client } = require("lrclib-api");
 
 const client = new Client();
+
 (async () => {
   const query = {
     track_name: "The Chain",
     artist_name: "Fleetwood Mac",
   };
 
-  const lyrics = await client.findLyrics(query);
-  console.log("Metadata:", lyrics);
+  try {
+    const metadata = await client.findLyrics(query);
+    console.log("Metadata:", metadata);
 
-  const unsyncedLyrics = await client.getUnsynced(query);
-  console.log("Unsynced Lyrics:", unsyncedLyrics);
+    const unsynced = await client.getUnsynced(query);
+    console.log("Unsynced Lyrics:", unsynced);
 
-  const syncedLyrics = await client.getSynced(query);
-  console.log("Synced Lyrics:", syncedLyrics);
+    const synced = await client.getSynced(query);
+    console.log("Synced Lyrics:", synced);
+  } catch (error) {
+    console.error("Error fetching lyrics:", error);
+  }
 })();
 ```
 
-#### ES Module
+#### ES Module / TypeScript
 
 ```ts
 import { Client } from "lrclib-api";
 
 const client = new Client();
+
 const query = {
   track_name: "The Chain",
   artist_name: "Fleetwood Mac",
 };
 
-const lyrics = await client.findLyrics(query);
-console.log("Metadata:", lyrics);
+async function fetchLyrics() {
+  try {
+    const metadata = await client.findLyrics(query);
+    console.log("Metadata:", metadata);
 
-const unsyncedLyrics = await client.getUnsynced(query);
-console.log("Unsynced Lyrics:", unsyncedLyrics);
+    const unsynced = await client.getUnsynced(query);
+    console.log("Unsynced Lyrics:", unsynced);
 
-const syncedLyrics = await client.getSynced(query);
-console.log("Synced Lyrics:", syncedLyrics);
+    const synced = await client.getSynced(query);
+    console.log("Synced Lyrics:", synced);
+  } catch (error) {
+    console.error("Error fetching lyrics:", error);
+  }
+}
+
+fetchLyrics();
 ```
 
 ## Example Response
@@ -85,7 +103,10 @@ console.log("Synced Lyrics:", syncedLyrics);
 ### Unsynced Lyrics Example
 
 ```json
-[{ "text": "Listen to the wind blow" }, { "text": "Watch the sun rise" }]
+[
+  { "text": "Listen to the wind blow" },
+  { "text": "Watch the sun rise" }
+]
 ```
 
 ### Synced Lyrics Example
@@ -101,20 +122,21 @@ console.log("Synced Lyrics:", syncedLyrics);
 
 To run the test suite:
 
-1. Clone the repository:
+1. **Clone the repository:**
 
    ```bash
    git clone https://github.com/igorwastaken/lrclib-api.git
    cd lrclib-api
    ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 
    ```bash
    npm install
    ```
 
-3. Run tests:
+3. **Run tests:**
+
    ```bash
    npm test
    ```
@@ -123,20 +145,26 @@ To run the test suite:
 
 Contributions are welcome! Here's how you can help:
 
-1. Fork the repository.
+1. **Fork** the repository.
 2. Create a new branch:
+
    ```bash
-   git checkout -b my-feature
+   git checkout -b my-new-feature
    ```
-3. Commit your changes:
+
+3. Make your changes and **commit**:
+
    ```bash
-   git commit -m "Add my feature"
+   git commit -m "Add new feature"
    ```
-4. Push to your branch:
+
+4. Push your branch to your fork:
+
    ```bash
-   git push origin my-feature
+   git push origin my-new-feature
    ```
-5. Open a pull request.
+
+5. Open a Pull Request describing your changes.
 
 ## License
 
@@ -144,6 +172,6 @@ This project is licensed under the [ISC License](https://opensource.org/licenses
 
 ## Links
 
-- **GitHub Repository**: [https://github.com/igorwastaken/lrclib-api](https://github.com/igorwastaken/lrclib-api)
-- **NPM Package**: [lrclib-api](https://www.npmjs.com/package/lrclib-api)
-- **lrclib.net**: [https://lrclib.net](https://lrclib.net)
+- **GitHub Repository:** [https://github.com/notigorwastaken/lrclib-api](https://github.com/notigorwastaken/lrclib-api)
+- **NPM Package:** [lrclib-api](https://www.npmjs.com/package/lrclib-api)
+- **lrclib.net:** [https://lrclib.net](https://lrclib.net)
