@@ -1,6 +1,6 @@
 {
   "name": "lrclib-api",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "The unofficial lrclib.net library for JS and TS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -13,7 +13,7 @@
     "test": "jest",
     "lint": "prettier . --check",
     "format": "prettier --write .",
-    "docs": "typedoc --plugin typedoc-github-theme --cname lrclib.js.org",
+    "docs": "typedoc --out ../../docs --plugin typedoc-github-theme --cname lrclib.js.org",
     "size": "size-limit",
     "prepare": "husky",
     "prepublishOnly": "npm run lint && npm run test && npm run build && npm run docs"
