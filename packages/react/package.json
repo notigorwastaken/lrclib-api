@@ -1,13 +1,42 @@
 {
   "name": "@lrclib-api/react",
-  "version": "0.0.0",
-  "private": true,
-  "main": "index.js",
+  "version": "0.0.1",
+  "private": false,
+  "main": "dist/lrclib-react.umd.js",
+  "module": "dist/lrclib-react.es.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint src --ext .ts,.tsx",
+    "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": ">=17"
   },
   "keywords": [],
-  "author": "",
+  "repository": "https://github.com/igorwastaken/lrclib-api",
+  "author": "Igor Figueiredo",
   "license": "ISC",
-  "description": ""
+  "description": "This is the React library of lrclib-api wrapper.",
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.1.12",
+    "@vitejs/plugin-react": "^5.0.2",
+    "eslint": "^9.35.0",
+    "jest": "^30.1.3",
+    "prettier": "^3.6.2",
+    "tslib": "^2.8.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.4"
+  },
+  "dependencies": {
+    "lrclib-api": "^2.0.3"
+  }
 }
