@@ -21,8 +21,8 @@ export function useSyncedLyrics(track: { artist: string; name: string }) {
           track_name: track.name,
         });
         setSyncedLyrics(res);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: any | unknown) {  
+        setError(err?.message);
       } finally {
         setLoading(false);
       }

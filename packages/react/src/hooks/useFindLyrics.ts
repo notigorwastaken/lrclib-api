@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLrcLib } from "../context/LrcLibProvider";
+import { FindLyricsResponse } from "lrclib-api";
 
 export function useFindLyrics(track: { artist: string; name: string }) {
   const client = useLrcLib();
   const [result, setResult] = useState<{
-    metadata?: any;
+    metadata?: FindLyricsResponse;
     plainLyrics?: string | null;
     syncedLyrics?: string | null;
   }>({});
