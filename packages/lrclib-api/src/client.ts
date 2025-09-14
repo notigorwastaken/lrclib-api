@@ -1,4 +1,3 @@
-import { solveChallenge } from "./challengeSolver";
 import { KeyError, NoResultError, NotFoundError, RequestError } from "./errors";
 import { ChallengeResponse, ClientOptions } from "./types/Client";
 import {
@@ -248,7 +247,7 @@ export class Client {
   }
   /**
    * This is an experimental function / API.
-   */
+   
   public async publishLyrics(info: PublishLyrics) {
     try {
       const challenge = await this.requestChallenge();
@@ -278,5 +277,5 @@ export class Client {
     } catch (e: any) {
       throw new Error(e?.message ?? "Unknown Error");
     }
-  }
+  }*/
 }
