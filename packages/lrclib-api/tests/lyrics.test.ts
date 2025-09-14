@@ -101,7 +101,7 @@ describe("search song lyrics", () => {
             expect(result.plainLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
             expect(result.syncedLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
             */
-  });/*
+  }); /*
   test("If challenge key is returning something", async () => {
     const challenge = await client.requestChallenge();
     console.log(
