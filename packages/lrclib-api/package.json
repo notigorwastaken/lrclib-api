@@ -1,6 +1,6 @@
 {
   "name": "lrclib-api",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Type-safe, dependency-light client for the LRCLIB lyrics API",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
