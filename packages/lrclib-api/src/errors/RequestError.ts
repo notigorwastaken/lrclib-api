@@ -1,11 +1,32 @@
+export type RequestErrorOptions = {
+  status?: number;
+  statusText?: string;
+  url?: string;
+  cause?: unknown;
+};
+
+/** An HTTP, network, timeout, or response-decoding failure. */
 export class RequestError extends Error {
-  constructor(error?: string) {
-    super("Request error " + error);
+  public readonly status?: number;
+  public readonly statusText?: string;
+  public readonly url?: string;
+
+  constructor(
+    message = "The LRCLIB request failed",
+    options: RequestErrorOptions = {},
+  ) {
+    super(message, { cause: options.cause });
+    this.name = "RequestError";
+    this.status = options.status;
+    this.statusText = options.statusText;
+    this.url = options.url;
   }
 }
 
+/** Raised when an operation requires a publish token. */
 export class KeyError extends Error {
-  constructor(error?: string) {
-    super("The key has not been configured.");
+  constructor() {
+    super("A publish token has not been configured");
+    this.name = "KeyError";
   }
 }

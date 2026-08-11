@@ -1,21 +1,25 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Security fixes are provided for the latest release line.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| 2.x     | Yes       |
+| < 2.0   | No        |
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Please use [GitHub's private vulnerability reporting form](https://github.com/notigorwastaken/lrclib-api/security/advisories/new). Do not open a public issue for an undisclosed vulnerability.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Include the affected version, a minimal reproduction, the expected impact, and any suggested mitigation. Never include real LRCLIB publish tokens or unrelated personal data.
+
+You should receive an acknowledgement within seven days. Valid reports will be investigated privately, and a coordinated disclosure date will be agreed upon when a release is required.
+
+## Security expectations for users
+
+- Treat publish tokens as secrets and load them from a secret manager or environment variable.
+- Use HTTPS whenever a publish token is configured.
+- Do not construct `ClientOptions.url` from untrusted request input. A custom URL intentionally allows the client to contact another LRCLIB-compatible server.
+- Keep this package and its runtime updated.

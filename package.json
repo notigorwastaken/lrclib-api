@@ -1,37 +1,45 @@
 {
   "name": "@lrclib-api/repo",
   "version": "0.0.0",
-  "main": "index.js",
   "private": true,
-  "directories": {
-    "doc": "docs"
-  },
   "type": "module",
   "scripts": {
     "build": "turbo build",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "dev": "turbo dev",
-    "test": "turbo run test",
-    "lint": "turbo lint",
     "format": "turbo format",
-    "prepare": "husky",
+    "lint": "turbo lint",
     "lint-staged": "lint-staged",
-    "publish": "turbo run build format lint && changeset version && changeset publish"
+    "prepare": "husky",
+    "release": "turbo run build lint test && changeset version && changeset publish",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
   },
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "npm@10.0.8",
+  "packageManager": "npm@10.9.9",
   "workspaces": [
     "packages/*"
   ],
-  "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.6",
-    "prettier": "^3.6.2",
-    "turbo": "^2.5.6",
-    "typescript": "^5.9.2"
+  "overrides": {
+    "esbuild": "0.27.2"
   },
-  "dependencies": {
-    "@changesets/cli": "^2.29.6"
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.1",
+    "@types/node": "^22.19.13",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.9",
+    "typescript": "^5.9.3"
   }
 }

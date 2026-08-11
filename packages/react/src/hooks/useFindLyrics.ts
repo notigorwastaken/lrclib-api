@@ -1,40 +1,57 @@
 import { useEffect, useState } from "react";
+import type { FindLyricsResponse } from "lrclib-api";
 import { useLrcLib } from "../context/LrcLibProvider";
-import { FindLyricsResponse } from "lrclib-api";
+import { errorMessage } from "./error";
 
-export function useFindLyrics(track: { artist: string; name: string }) {
+type Track = { artist: string; name: string };
+
+type FindLyricsState = {
+  metadata?: FindLyricsResponse;
+  plainLyrics?: string | null;
+  syncedLyrics?: string | null;
+};
+
+export function useFindLyrics(track: Track) {
   const client = useLrcLib();
-  const [result, setResult] = useState<{
-    metadata?: FindLyricsResponse;
-    plainLyrics?: string | null;
-    syncedLyrics?: string | null;
-  }>({});
+  const [result, setResult] = useState<FindLyricsState>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!track.artist || !track.name) return;
+    const controller = new AbortController();
 
+    if (!track.artist.trim() || !track.name.trim()) {
+      setResult({});
+      setLoading(false);
+      setError(null);
+      return () => controller.abort();
+    }
+
+    setResult({});
     setLoading(true);
     setError(null);
 
-    (async () => {
-      try {
-        const res = await client.findLyrics({
-          artist_name: track.artist,
-          track_name: track.name,
-        });
+    void client
+      .findLyrics(
+        { artist_name: track.artist, track_name: track.name },
+        { signal: controller.signal },
+      )
+      .then((response) => {
+        if (controller.signal.aborted) return;
         setResult({
-          metadata: res,
-          plainLyrics: res.plainLyrics,
-          syncedLyrics: res.syncedLyrics,
+          metadata: response,
+          plainLyrics: response.plainLyrics,
+          syncedLyrics: response.syncedLyrics,
         });
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) setError(errorMessage(requestError));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
   }, [track.artist, track.name, client]);
 
   return { ...result, loading, error };

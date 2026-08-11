@@ -1,17 +1,21 @@
-import { defineConfig } from "vite";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from "vite";
+
+const packageDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: path.resolve(__dirname, "src/index.ts"),
+      entry: path.resolve(packageDirectory, "src/index.ts"),
       name: "LrclibReact",
-      fileName: (format) => `lrclib-react.${format}.js`,
+      formats: ["es", "cjs"],
+      fileName: (format) => (format === "es" ? "index.mjs" : "index.cjs"),
     },
+    sourcemap: true,
     rollupOptions: {
-      // mark react as external so it’s not bundled
       external: ["react", "react-dom", "lrclib-api"],
       output: {
         globals: {

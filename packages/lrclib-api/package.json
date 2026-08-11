@@ -1,59 +1,74 @@
 {
   "name": "lrclib-api",
   "version": "2.0.4",
-  "description": "The unofficial lrclib.net library for JS and TS",
+  "description": "Type-safe, dependency-light client for the LRCLIB lyrics API",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
-    "test": "jest",
-    "lint": "prettier . --check",
-    "format": "prettier --write .",
     "docs": "typedoc --out ../../docs --plugin typedoc-github-theme --cname lrclib.js.org",
-    "size": "size-limit",
-    "prepare": "husky",
-    "prepublishOnly": "npm run lint && npm run test && npm run build && npm run docs"
+    "format": "prettier --write .",
+    "lint": "eslint . && prettier . --check",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build",
+    "test": "jest --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "keywords": [
     "music",
     "lyrics",
     "api",
-    "lrclib"
+    "lrc",
+    "lrclib",
+    "typescript"
   ],
   "homepage": "https://lrclib.js.org",
-  "repository": "https://github.com/igorwastaken/lrclib-api",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/notigorwastaken/lrclib-api.git",
+    "directory": "packages/lrclib-api"
+  },
+  "bugs": {
+    "url": "https://github.com/notigorwastaken/lrclib-api/issues"
+  },
   "author": "Igor Figueiredo",
   "license": "ISC",
-  "devDependencies": {
-    "@commitlint/cli": "^19.6.1",
-    "@commitlint/config-conventional": "^19.6.0",
-    "@eslint/js": "^9.18.0",
-    "@size-limit/preset-small-lib": "^11.1.6",
-    "@types/jest": "^29.5.14",
-    "globals": "^15.14.0",
-    "husky": "^9.1.7",
-    "jest": "^29.7.0",
-    "jest-coverage-badges": "^1.0.0",
-    "jest-fetch-mock": "^3.0.3",
-    "lint-staged": "^15.3.0",
-    "markdownlint-cli": "^0.43.0",
-    "prettier": "^3.4.2",
-    "size-limit": "^11.1.6",
-    "standard-version": "^9.5.0",
-    "ts-jest": "^29.2.5",
-    "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.2",
-    "tsup": "^8.3.5",
-    "typedoc": "^0.27.6",
-    "typedoc-github-theme": "^0.2.1",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.19.1"
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
-  "private": false,
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/jest": "^29.5.14",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.12",
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.20",
+    "typedoc-github-theme": "^0.4.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.67.0"
+  },
   "dependencies": {
     "tslib": "^2.8.1"
   }

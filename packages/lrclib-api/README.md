@@ -1,175 +1,143 @@
+# lrclib-api
+
 [![npm version](https://img.shields.io/npm/v/lrclib-api.svg)](https://www.npmjs.com/package/lrclib-api)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](./LICENSE)
 
-<!--[![Build Status](https://img.shields.io/travis/igorwastaken/lrclib-api.svg)](https://travis-ci.org/igorwastaken/lrclib-api)-->
-
-**lrclib-api** is a TypeScript wrapper for the [lrclib.net](https://lrclib.net) API. It provides a simple, type-safe way to fetch song lyrics and metadata, supporting both plain (unsynced) and synchronized (timed) lyrics.
-
-## Features
-
-- **Easy Lyrics Retrieval:** Fetch song lyrics by track name, artist, or album.
-- **Dual Mode:** Supports both plain (unsynced) and synced (timed) lyrics.
-- **Instrumental Handling:** Gracefully handles instrumental tracks.
-- **Rich Metadata:** Returns track details including track name, artist, album, and duration.
-- **TypeScript First:** Enjoy complete type safety in your projects.
+A type-safe, dependency-light TypeScript client for the [LRCLIB](https://lrclib.net) API. It supports exact lookups, search, plain and synchronized lyrics, LRC parsing, custom instances, request cancellation, and configurable timeouts.
 
 ## Installation
-
-Install the package via npm:
 
 ```bash
 npm install lrclib-api
 ```
 
-## Usage
+Node.js 20 or newer is supported. The package also works in modern browsers with `fetch`, `URL`, and `AbortController`.
 
-### Basic Example
-
-#### JavaScript
-
-```js
-const { Client } = require("lrclib-api");
-
-const client = new Client();
-
-(async () => {
-  const query = {
-    track_name: "The Chain",
-    artist_name: "Fleetwood Mac",
-  };
-
-  try {
-    const metadata = await client.findLyrics(query);
-    console.log("Metadata:", metadata);
-
-    const unsynced = await client.getUnsynced(query);
-    console.log("Unsynced Lyrics:", unsynced);
-
-    const synced = await client.getSynced(query);
-    console.log("Synced Lyrics:", synced);
-  } catch (error) {
-    console.error("Error fetching lyrics:", error);
-  }
-})();
-```
-
-#### ES Module / TypeScript
+## Basic usage
 
 ```ts
 import { Client } from "lrclib-api";
 
 const client = new Client();
 
-const query = {
+const result = await client.findLyrics({
   track_name: "The Chain",
   artist_name: "Fleetwood Mac",
-};
+});
 
-async function fetchLyrics() {
-  try {
-    const metadata = await client.findLyrics(query);
-    console.log("Metadata:", metadata);
-
-    const unsynced = await client.getUnsynced(query);
-    console.log("Unsynced Lyrics:", unsynced);
-
-    const synced = await client.getSynced(query);
-    console.log("Synced Lyrics:", synced);
-  } catch (error) {
-    console.error("Error fetching lyrics:", error);
-  }
-}
-
-fetchLyrics();
+console.log(result.plainLyrics);
 ```
 
-## Example Response
+CommonJS is supported too:
 
-### `findLyrics` Response
-
-```json
-{
-  "id": 151738,
-  "name": "The Chain",
-  "trackName": "The Chain",
-  "artistName": "Fleetwood Mac",
-  "albumName": "Rumours",
-  "duration": 271,
-  "instrumental": false,
-  "plainLyrics": "Listen to the wind blow\nWatch the sun rise...",
-  "syncedLyrics": "[00:27.93] Listen to the wind blow\n[00:30.88] Watch the sun rise..."
-}
+```js
+const { Client } = require("lrclib-api");
 ```
 
-### Unsynced Lyrics Example
+## Search and parsed lyrics
 
-```json
-[{ "text": "Listen to the wind blow" }, { "text": "Watch the sun rise" }]
+```ts
+const matches = await client.searchLyrics({
+  query: "The Chain Fleetwood Mac",
+});
+
+const plainLines = await client.getUnsynced({ id: matches[0].id });
+const timedLines = await client.getSynced({ id: matches[0].id });
 ```
 
-### Synced Lyrics Example
+`getUnsynced` returns `{ text }` lines. `getSynced` returns `{ text, startTime }` lines, where `startTime` is measured in seconds:
 
 ```json
 [
-  { "text": "Listen to the wind blow", "startTime": 27930 },
-  { "text": "Watch the sun rise", "startTime": 30880 }
+  { "text": "Listen to the wind blow", "startTime": 27.93 },
+  { "text": "Watch the sun rise", "startTime": 30.88 }
 ]
 ```
 
-## Running Tests
+Query and publish durations are supplied in milliseconds and converted to LRCLIB's seconds format.
 
-To run the test suite:
+## Client options
 
-1. **Clone the repository:**
+```ts
+const client = new Client({
+  url: "https://lrclib.example/api",
+  timeoutMs: 10_000,
+  key: process.env.LRCLIB_PUBLISH_TOKEN,
+});
+```
 
-   ```bash
-   git clone https://github.com/igorwastaken/lrclib-api.git
-   cd lrclib-api
-   ```
+| Option      | Description                                                                    |
+| ----------- | ------------------------------------------------------------------------------ |
+| `url`       | HTTP(S) base URL for an LRCLIB-compatible API                                  |
+| `timeoutMs` | Per-request timeout in milliseconds; defaults to 15 seconds, or `0` to disable |
+| `key`       | Publish token sent only by `publishLyrics`; HTTPS is required                  |
+| `fetch`     | Optional fetch-compatible implementation for custom runtimes or tests          |
 
-2. **Install dependencies:**
+Every request method accepts a `RequestInit`, including an abort signal:
 
-   ```bash
-   npm install
-   ```
+```ts
+const controller = new AbortController();
 
-3. **Run tests:**
+const request = client.findLyrics(
+  { id: 151738 },
+  { signal: controller.signal },
+);
 
-   ```bash
-   npm test
-   ```
+controller.abort();
+await request;
+```
 
-## Contributing
+## Errors
 
-Contributions are welcome! Here's how you can help:
+- `NotFoundError` is thrown by `findLyrics` for HTTP 404 responses.
+- `RequestError` wraps HTTP errors, invalid API responses, network failures, aborts, and timeouts. It exposes safe `status`, `statusText`, and `url` metadata without copying response bodies into logs.
+- `getSynced` and `getUnsynced` return `null` when a track or lyric format is absent, but propagate operational failures.
+- `KeyError` is thrown when `publishLyrics` is called without a token.
 
-1. **Fork** the repository.
-2. Create a new branch:
+## Publishing lyrics
 
-   ```bash
-   git checkout -b my-new-feature
-   ```
+Pass a proof-of-work publish token obtained according to the [LRCLIB API documentation](https://lrclib.net/docs):
 
-3. Make your changes and **commit**:
+```ts
+const publishingClient = new Client({
+  key: process.env.LRCLIB_PUBLISH_TOKEN,
+});
 
-   ```bash
-   git commit -m "Add new feature"
-   ```
+await publishingClient.publishLyrics({
+  trackName: "Example",
+  artistName: "Example Artist",
+  albumName: "Example Album",
+  duration: 180_000,
+  plainLyrics: "First line\nSecond line",
+});
+```
 
-4. Push your branch to your fork:
+Redirects are rejected for publish requests so the token cannot be forwarded to another origin.
 
-   ```bash
-   git push origin my-new-feature
-   ```
+## Local LRC parsing
 
-5. Open a Pull Request describing your changes.
+```ts
+import { parseLocalLyrics, parseTime } from "lrclib-api";
+
+parseTime("00:27.93"); // 27.93
+parseLocalLyrics("[00:27.93] Listen to the wind blow");
+```
+
+Metadata tags and blank lines are ignored, CRLF input is normalized, and repeated timestamps on a single line are supported.
+
+## Development
+
+```bash
+git clone https://github.com/notigorwastaken/lrclib-api.git
+cd lrclib-api
+npm ci
+npm run check
+```
+
+## Security
+
+Do not construct a custom `url` from untrusted input. Publish tokens must be kept secret and are only accepted with HTTPS URLs. Report vulnerabilities through the repository's [security policy](../../SECURITY.md).
 
 ## License
 
-This project is licensed under the [ISC License](https://opensource.org/licenses/ISC).
-
-## Links
-
-- **GitHub Repository:** [https://github.com/notigorwastaken/lrclib-api](https://github.com/notigorwastaken/lrclib-api)
-- **NPM Package:** [lrclib-api](https://www.npmjs.com/package/lrclib-api)
-- **lrclib.net:** [https://lrclib.net](https://lrclib.net)
+ISC © Igor Figueiredo.

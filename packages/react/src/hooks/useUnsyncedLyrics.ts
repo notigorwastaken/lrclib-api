@@ -1,31 +1,46 @@
 import { useEffect, useState } from "react";
+import type { LyricLine } from "lrclib-api";
 import { useLrcLib } from "../context/LrcLibProvider";
+import { errorMessage } from "./error";
 
-export function useUnsyncedLyrics(track: { artist: string; name: string }) {
+type Track = { artist: string; name: string };
+
+export function useUnsyncedLyrics(track: Track) {
   const client = useLrcLib();
-  const [plainLyrics, setPlainLyrics] = useState<string | null>(null);
+  const [plainLyrics, setPlainLyrics] = useState<LyricLine[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!track.artist || !track.name) return;
+    const controller = new AbortController();
 
+    if (!track.artist.trim() || !track.name.trim()) {
+      setPlainLyrics(null);
+      setLoading(false);
+      setError(null);
+      return () => controller.abort();
+    }
+
+    setPlainLyrics(null);
     setLoading(true);
     setError(null);
 
-    (async () => {
-      try {
-        const res = await client.getUnsynced({
-          artist_name: track.artist,
-          track_name: track.name,
-        });
-        setPlainLyrics(res);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    void client
+      .getUnsynced(
+        { artist_name: track.artist, track_name: track.name },
+        { signal: controller.signal },
+      )
+      .then((lyrics) => {
+        if (!controller.signal.aborted) setPlainLyrics(lyrics);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) setError(errorMessage(requestError));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
   }, [track.artist, track.name, client]);
 
   return { plainLyrics, loading, error };

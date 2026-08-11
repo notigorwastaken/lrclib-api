@@ -1,16 +1,11 @@
-/**
- * Defines the query object used to search for lyrics.
- *
- * This type is a union of two possible structures:
- * 1. Search by track details (e.g., track name and artist).
- * 2. Search by a unique track ID.
- */
+/** Query a track by metadata or by its numeric LRCLIB ID. */
 type Query =
   | {
       id?: never;
       track_name: string;
       artist_name: string;
       album_name?: string;
+      /** Track duration in milliseconds. */
       duration?: number;
     }
   | {
@@ -21,9 +16,7 @@ type Query =
       duration?: never;
     };
 
-/**
- * Represents the response returned from the lyrics API.
- */
+/** A successful lyrics response returned by LRCLIB. */
 type FindLyricsResponse = {
   id: number;
   name: string;
@@ -34,27 +27,21 @@ type FindLyricsResponse = {
   instrumental: boolean;
   plainLyrics: string | null;
   syncedLyrics: string | null;
-} & ErrorResponse;
+};
 
+/** The error payload shape used by LRCLIB. */
 type ErrorResponse = {
   code: number;
   name: string;
   message: string;
 };
 
-/**
- * Defines the parameters for searching lyrics.
- * Combines the {@link SearchType} structure with additional optional parameters.
- */
 type Search = SearchType & {
   artist_name?: string;
+  /** Track duration in milliseconds. */
   duration?: number;
 };
 
-/**
- * Defines the parameters for searching lyrics.
- * Combines the {@link SearchType} structure with additional optional parameters.
- */
 type SearchType =
   | {
       track_name?: never;
@@ -65,20 +52,26 @@ type SearchType =
       query?: never;
     };
 
-type PublishLyrics = {
+type PublishLyricsBase = {
   trackName: string;
   artistName: string;
   albumName: string;
+  /** Track duration in milliseconds. */
   duration: number;
-  plainLyrics: string;
-  // syncedLyrics: string;
 };
 
+/** A publish payload containing plain lyrics, synced lyrics, or both. */
+type PublishLyrics = PublishLyricsBase &
+  (
+    | { plainLyrics: string; syncedLyrics?: string }
+    | { plainLyrics?: string; syncedLyrics: string }
+  );
+
 export {
-  Query,
   ErrorResponse,
   FindLyricsResponse,
-  SearchType,
-  Search,
   PublishLyrics,
+  Query,
+  Search,
+  SearchType,
 };
