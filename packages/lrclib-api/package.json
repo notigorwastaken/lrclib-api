@@ -57,7 +57,7 @@
     "provenance": true
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@types/jest": "^29.5.14",
     "eslint": "^9.39.5",
     "globals": "^16.5.0",

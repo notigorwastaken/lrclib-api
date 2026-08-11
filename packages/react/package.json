@@ -58,7 +58,7 @@
     "provenance": true
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.18",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.39.5",
