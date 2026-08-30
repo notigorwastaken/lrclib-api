@@ -93,14 +93,12 @@ describe("search song lyrics", () => {
         "[00:27.93] Listen to the wind blow\n[00:30.88] Watch the sun rise",
       ),
     };
-    /*
-            // Assert the structure
-            expect(result).toEqual(expect.objectContaining(expectedResult));
-        
-            // Optionally, validate specific details
-            expect(result.plainLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
-            expect(result.syncedLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
-            */
+    // Assert the structure
+    expect(result).toEqual(expect.objectContaining(expectedResult));
+
+    // Optionally, validate specific details
+    expect(result.plainLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in plain lyrics
+    expect(result.syncedLyrics?.split("\n").length).toBeGreaterThan(10); // Ensure multiple lines in synced lyrics
   }); /*
   test("If challenge key is returning something", async () => {
     const challenge = await client.requestChallenge();
