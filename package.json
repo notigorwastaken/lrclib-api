@@ -37,9 +37,9 @@
     "@changesets/cli": "^2.31.1",
     "@types/node": "^22.19.13",
     "husky": "^9.1.7",
-    "lint-staged": "^17.3.0",
+    "lint-staged": "^17.5.1",
     "prettier": "^3.9.6",
-    "turbo": "^2.10.9",
+    "turbo": "^2.10.12",
     "typescript": "^5.9.3"
   }
 }
