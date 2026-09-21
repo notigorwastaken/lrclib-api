@@ -1,6 +1,11 @@
 import { Client } from "../src";
 
-describe("song lyrics", () => {
+// These tests call the public LRCLIB API, so they only run on request:
+//   LRCLIB_LIVE_TESTS=1 npm test
+const describeLive =
+  process.env.LRCLIB_LIVE_TESTS === "1" ? describe : describe.skip;
+
+describeLive("song lyrics", () => {
   const client = new Client();
   test("get song lyrics", async () => {
     const result = await client.findLyrics({
@@ -44,7 +49,7 @@ describe("song lyrics", () => {
     console.log(result);
   });
 });
-describe("search song lyrics", () => {
+describeLive("search song lyrics", () => {
   const client = new Client();
   /*test("search song lyrics", async () => {
     const result = await client.searchLyrics({

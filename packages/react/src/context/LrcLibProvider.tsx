@@ -9,6 +9,8 @@ export type LrcLibProviderProps = {
   apiKey?: string;
   baseUrl?: string;
   timeoutMs?: number;
+  /** Sent as the `Lrclib-Client` header, e.g. "MyPlayer v1.2.0 (https://example.com)". */
+  clientName?: string;
 };
 
 /** Provides one stable LRCLIB client to all descendant hooks. */
@@ -17,10 +19,11 @@ export function LrcLibProvider({
   apiKey,
   baseUrl,
   timeoutMs,
+  clientName,
 }: LrcLibProviderProps) {
   const client = useMemo(
-    () => new Client({ key: apiKey, url: baseUrl, timeoutMs }),
-    [apiKey, baseUrl, timeoutMs],
+    () => new Client({ key: apiKey, url: baseUrl, timeoutMs, clientName }),
+    [apiKey, baseUrl, timeoutMs, clientName],
   );
 
   return (

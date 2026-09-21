@@ -23,10 +23,10 @@ export class RequestError extends Error {
   }
 }
 
-/** Raised when an operation requires a publish token. */
+/** Raised when an operation requires a publish token that is missing or empty. */
 export class KeyError extends Error {
-  constructor() {
-    super("A publish token has not been configured");
+  constructor(message = "A publish token has not been configured") {
+    super(message);
     this.name = "KeyError";
   }
 }

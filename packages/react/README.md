@@ -33,7 +33,10 @@ function Lyrics() {
 
 export function App() {
   return (
-    <LrcLibProvider timeoutMs={10_000}>
+    <LrcLibProvider
+      timeoutMs={10_000}
+      clientName="MyPlayer v1.2.0 (https://example.com)"
+    >
       <Lyrics />
     </LrcLibProvider>
   );
@@ -42,9 +45,11 @@ export function App() {
 
 Available hooks:
 
-- `useFindLyrics` returns metadata and raw plain/synchronized lyric strings.
+- `useFindLyrics` returns metadata, raw plain/synchronized lyric strings, and the raw `lyricsfile` YAML when the server provides one.
 - `useUnsyncedLyrics` returns parsed `{ text }` lines.
 - `useSyncedLyrics` returns parsed `{ text, startTime }` lines.
+
+`clientName` is sent as the `Lrclib-Client` header so LRCLIB can identify your application.
 
 Requests are cancelled when a component unmounts or its track changes, preventing stale responses from overwriting newer state.
 

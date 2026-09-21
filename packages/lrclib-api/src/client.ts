@@ -3,9 +3,11 @@ import type {
   ChallengeResponse,
   ClientOptions,
   FetchImplementation,
+  PublishTokenSource,
 } from "./types/Client";
 import type {
   FindLyricsResponse,
+  FlagLyrics,
   PublishLyrics,
   Query,
   Search,
@@ -15,6 +17,7 @@ import { parseLocalLyrics } from "./utils";
 
 const DEFAULT_BASE_URL = "https://lrclib.net/api";
 const DEFAULT_TIMEOUT_MS = 15_000;
+const CLIENT_HEADER = "Lrclib-Client";
 
 type QueryValue = string | number | undefined;
 
@@ -40,7 +43,8 @@ function isLyricsResponse(value: unknown): value is FindLyricsResponse {
     Number.isFinite(value.duration) &&
     typeof value.instrumental === "boolean" &&
     isNullableString(value.plainLyrics) &&
-    isNullableString(value.syncedLyrics)
+    isNullableString(value.syncedLyrics) &&
+    (value.lyricsfile === undefined || isNullableString(value.lyricsfile))
   );
 }
 
@@ -83,19 +87,48 @@ function validateText(value: unknown, field: string): asserts value is string {
   }
 }
 
+function normalizeTokenSource(
+  key: ClientOptions["key"],
+): PublishTokenSource | undefined {
+  if (typeof key === "function") return key;
+  return key?.trim() || undefined;
+}
+
+function normalizeClientName(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") {
+    throw new TypeError("clientName must be a string");
+  }
+
+  const name = value.trim();
+  if (!name) return undefined;
+  if (!/^[\x20-\x7e]+$/.test(name)) {
+    throw new TypeError(
+      "clientName must contain only printable ASCII characters",
+    );
+  }
+  return name;
+}
+
+function hasText(value: unknown): boolean {
+  return typeof value === "string" && value.trim() !== "";
+}
+
 /** A type-safe client for the LRCLIB API. */
 export class Client {
   private readonly baseUrl: URL;
-  private readonly publishToken?: string;
+  private readonly tokenSource?: PublishTokenSource;
+  private readonly clientName?: string;
   private readonly timeoutMs: number;
   private readonly fetchImplementation: FetchImplementation;
 
   constructor(options: ClientOptions = {}) {
-    const publishToken = options.key?.trim() || undefined;
+    const tokenSource = normalizeTokenSource(options.key);
     this.baseUrl = normalizeBaseUrl(
       options.url ?? DEFAULT_BASE_URL,
-      publishToken !== undefined,
+      tokenSource !== undefined,
     );
+    this.clientName = normalizeClientName(options.clientName);
 
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
@@ -109,7 +142,7 @@ export class Client {
       );
     }
 
-    this.publishToken = publishToken;
+    this.tokenSource = tokenSource;
     this.timeoutMs = timeoutMs;
     this.fetchImplementation = fetchImplementation;
   }
@@ -154,11 +187,16 @@ export class Client {
       }, this.timeoutMs);
     }
 
+    const init: RequestInit = { ...options, signal: controller.signal };
+    if (this.clientName) {
+      const headers = new Headers(options.headers);
+      if (!headers.has(CLIENT_HEADER))
+        headers.set(CLIENT_HEADER, this.clientName);
+      init.headers = headers;
+    }
+
     try {
-      return await this.fetchImplementation(url, {
-        ...options,
-        signal: controller.signal,
-      });
+      return await this.fetchImplementation(url, init);
     } catch (cause) {
       const message = timedOut
         ? `LRCLIB request timed out after ${this.timeoutMs} ms`
@@ -218,6 +256,7 @@ export class Client {
       q: "query" in info ? info.query : undefined,
       track_name: "track_name" in info ? info.track_name : undefined,
       artist_name: info.artist_name,
+      album_name: info.album_name,
       duration: durationInSeconds(info.duration),
     });
     const response = await this.request(url, options);
@@ -310,7 +349,29 @@ export class Client {
     }
   }
 
-  /** Requests the proof-of-work challenge used by LRCLIB publishing clients. */
+  /**
+   * Gets the raw Lyricsfile YAML document of a track, or `null` when the track
+   * or its Lyricsfile is unavailable. The YAML is returned unparsed so the
+   * client stays dependency-free; use the YAML parser of your choice.
+   */
+  public async getLyricsfile(
+    info: Query,
+    options?: RequestInit,
+  ): Promise<string | null> {
+    try {
+      const body = await this.findLyrics(info, options);
+      return hasText(body.lyricsfile) ? (body.lyricsfile ?? null) : null;
+    } catch (error) {
+      if (error instanceof NotFoundError) return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Requests the proof-of-work challenge used to obtain a publish token.
+   * Challenges expire after five minutes; the token is `{prefix}:{nonce}` and
+   * can only be used once.
+   */
   public async requestChallenge(
     options?: RequestInit,
   ): Promise<ChallengeResponse> {
@@ -342,45 +403,123 @@ export class Client {
     return { prefix: body.prefix, target: body.target };
   }
 
+  private async resolvePublishToken(): Promise<string> {
+    const source = this.tokenSource;
+    if (source === undefined) throw new KeyError();
+
+    const token = typeof source === "function" ? await source() : source;
+    if (!hasText(token)) {
+      throw new KeyError("The publish token provider returned an empty token");
+    }
+    return token.trim();
+  }
+
+  /**
+   * Sends a JSON POST authenticated with a publish token. Redirects are
+   * rejected so the token cannot be forwarded to another origin.
+   */
+  private async postWithToken(
+    path: string,
+    payload: Record<string, unknown>,
+    options?: RequestInit,
+  ): Promise<{ response: Response; url: URL }> {
+    const token = await this.resolvePublishToken();
+
+    const headers = new Headers(options?.headers);
+    headers.set("Accept", "application/json");
+    headers.set("Content-Type", "application/json");
+    headers.set("X-Publish-Token", token);
+
+    const url = this.createUrl(path);
+    const response = await this.request(url, {
+      ...options,
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      redirect: "error",
+    });
+
+    return { response, url };
+  }
+
   /**
    * Publishes lyrics with the token supplied in `ClientOptions.key`.
-   * Redirects are rejected so the token cannot be forwarded to another origin.
+   *
+   * Send plain lyrics, synced lyrics or a Lyricsfile (which LRCLIB stores as-is
+   * and prefers over the other two), or set `instrumental: true` to mark the
+   * track as instrumental. Redirects are rejected so the token cannot be
+   * forwarded to another origin.
    */
   public async publishLyrics(
     info: PublishLyrics,
     options?: RequestInit,
   ): Promise<string> {
-    if (!this.publishToken) throw new KeyError();
+    if (this.tokenSource === undefined) throw new KeyError();
 
     validateText(info.trackName, "trackName");
     validateText(info.artistName, "artistName");
     validateText(info.albumName, "albumName");
-    if (!info.plainLyrics?.trim() && !info.syncedLyrics?.trim()) {
-      throw new TypeError("At least one lyrics field must not be empty");
+
+    const hasLyrics =
+      hasText(info.plainLyrics) ||
+      hasText(info.syncedLyrics) ||
+      hasText(info.lyricsfile);
+    if (info.instrumental === true) {
+      if (hasLyrics) {
+        throw new TypeError("Instrumental tracks must not include lyrics");
+      }
+    } else if (!hasLyrics) {
+      throw new TypeError(
+        "At least one lyrics field must not be empty (or set instrumental: true)",
+      );
     }
 
-    const headers = new Headers(options?.headers);
-    headers.set("Accept", "application/json");
-    headers.set("Content-Type", "application/json");
-    headers.set("X-Publish-Token", this.publishToken);
+    const payload: Record<string, unknown> = {
+      trackName: info.trackName,
+      artistName: info.artistName,
+      albumName: info.albumName,
+      duration: durationInSeconds(info.duration),
+      plainLyrics: info.plainLyrics ?? "",
+      syncedLyrics: info.syncedLyrics ?? "",
+    };
+    if (hasText(info.lyricsfile)) payload.lyricsfile = info.lyricsfile;
 
-    const url = this.createUrl("publish");
-    const response = await this.request(url, {
-      ...options,
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        track_name: info.trackName,
-        artist_name: info.artistName,
-        album_name: info.albumName,
-        duration: durationInSeconds(info.duration),
-        plain_lyrics: info.plainLyrics ?? "",
-        synced_lyrics: info.syncedLyrics ?? "",
-      }),
-      redirect: "error",
-    });
-
+    const { response, url } = await this.postWithToken(
+      "publish",
+      payload,
+      options,
+    );
     if (response.status !== 201) throw this.httpError(response, url);
     return await response.text();
+  }
+
+  /**
+   * Reports the currently published lyrics of a track (wrong lyrics, wrong
+   * metadata, copyright issues). Requires a fresh publish token, so prefer a
+   * token provider in `ClientOptions.key` when the client also publishes.
+   */
+  public async flagLyrics(
+    info: FlagLyrics,
+    options?: RequestInit,
+  ): Promise<void> {
+    if (this.tokenSource === undefined) throw new KeyError();
+
+    if (!Number.isSafeInteger(info.trackId) || info.trackId <= 0) {
+      throw new RangeError("Track ID must be a positive safe integer");
+    }
+    if (info.content !== undefined && typeof info.content !== "string") {
+      throw new TypeError("content must be a string");
+    }
+
+    const payload: Record<string, unknown> = { trackId: info.trackId };
+    const content = info.content?.trim();
+    if (content) payload.content = content;
+
+    const { response, url } = await this.postWithToken(
+      "flag",
+      payload,
+      options,
+    );
+    if (!response.ok) throw this.httpError(response, url);
   }
 }

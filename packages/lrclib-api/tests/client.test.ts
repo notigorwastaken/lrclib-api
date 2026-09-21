@@ -290,9 +290,13 @@ describe("Client", () => {
       "publish-token",
     );
     expect(options).toMatchObject({ method: "POST", redirect: "error" });
-    expect(JSON.parse(String(options?.body))).toMatchObject({
+    expect(JSON.parse(String(options?.body))).toEqual({
+      trackName: "The Chain",
+      artistName: "Fleetwood Mac",
+      albumName: "Rumours",
       duration: 271,
-      track_name: "The Chain",
+      plainLyrics: "Listen to the wind blow",
+      syncedLyrics: "",
     });
   });
 
@@ -405,5 +409,351 @@ describe("Client", () => {
     await expect(
       client.findLyrics({ id: 151738 }, { signal: controller.signal }),
     ).rejects.toMatchObject({ message: "LRCLIB request was aborted" });
+  });
+
+  describe("lyricsfile", () => {
+    const LYRICSFILE = "version: '1.0'\nmetadata:\n  title: The Chain\n";
+
+    test("accepts records with a lyricsfile, a null one or none at all", async () => {
+      const mock = fetchMock();
+      const client = new Client();
+
+      mock.mockResolvedValueOnce(
+        jsonResponse({ ...LYRICS_RESPONSE, lyricsfile: LYRICSFILE }),
+      );
+      await expect(client.findLyrics({ id: 151738 })).resolves.toMatchObject({
+        lyricsfile: LYRICSFILE,
+      });
+
+      mock.mockResolvedValueOnce(
+        jsonResponse({ ...LYRICS_RESPONSE, lyricsfile: null }),
+      );
+      await expect(client.findLyrics({ id: 151738 })).resolves.toMatchObject({
+        lyricsfile: null,
+      });
+
+      mock.mockResolvedValueOnce(jsonResponse(LYRICS_RESPONSE));
+      await expect(client.findLyrics({ id: 151738 })).resolves.toEqual(
+        LYRICS_RESPONSE,
+      );
+    });
+
+    test("rejects a lyricsfile that is not a string", async () => {
+      fetchMock().mockResolvedValueOnce(
+        jsonResponse({ ...LYRICS_RESPONSE, lyricsfile: 42 }),
+      );
+      await expect(
+        new Client().findLyrics({ id: 151738 }),
+      ).rejects.toMatchObject({
+        message: "LRCLIB returned an invalid lyrics response",
+      });
+    });
+
+    test("validates lyricsfile in search results", async () => {
+      fetchMock().mockResolvedValueOnce(
+        jsonResponse([{ ...LYRICS_RESPONSE, lyricsfile: LYRICSFILE }]),
+      );
+      await expect(
+        new Client().searchLyrics({ query: "The Chain" }),
+      ).resolves.toHaveLength(1);
+    });
+
+    test("getLyricsfile returns the raw YAML or null", async () => {
+      const mock = fetchMock();
+      const client = new Client();
+
+      mock.mockResolvedValueOnce(
+        jsonResponse({ ...LYRICS_RESPONSE, lyricsfile: LYRICSFILE }),
+      );
+      await expect(client.getLyricsfile({ id: 151738 })).resolves.toBe(
+        LYRICSFILE,
+      );
+
+      mock.mockResolvedValueOnce(
+        jsonResponse({ ...LYRICS_RESPONSE, lyricsfile: null }),
+      );
+      await expect(client.getLyricsfile({ id: 151738 })).resolves.toBeNull();
+
+      mock.mockResolvedValueOnce(jsonResponse(LYRICS_RESPONSE));
+      await expect(client.getLyricsfile({ id: 151738 })).resolves.toBeNull();
+
+      mock.mockResolvedValueOnce(jsonResponse({ code: 404 }, 404, "Not Found"));
+      await expect(client.getLyricsfile({ id: 999 })).resolves.toBeNull();
+
+      mock.mockResolvedValueOnce(new Response("nope", { status: 503 }));
+      await expect(client.getLyricsfile({ id: 1 })).rejects.toMatchObject({
+        status: 503,
+      });
+    });
+  });
+
+  test("passes album_name through to search", async () => {
+    const mock = fetchMock().mockResolvedValueOnce(jsonResponse([]));
+    await new Client().searchLyrics({
+      track_name: "The Chain",
+      artist_name: "Fleetwood Mac",
+      album_name: "Rumours",
+    });
+
+    const url = new URL(String(mock.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("album_name")).toBe("Rumours");
+  });
+
+  describe("client identification", () => {
+    test("sends Lrclib-Client on every request when configured", async () => {
+      const mock = fetchMock()
+        .mockResolvedValueOnce(jsonResponse(LYRICS_RESPONSE))
+        .mockResolvedValueOnce(jsonResponse({ prefix: "a", target: "b" }));
+      const client = new Client({
+        clientName: "  MyPlayer v1.0 (https://x.y) ",
+      });
+
+      await client.findLyrics({ id: 151738 });
+      await client.requestChallenge();
+
+      for (const call of mock.mock.calls) {
+        expect(new Headers(call[1]?.headers).get("Lrclib-Client")).toBe(
+          "MyPlayer v1.0 (https://x.y)",
+        );
+      }
+    });
+
+    test("does not touch headers when no client name is set", async () => {
+      const mock = fetchMock().mockResolvedValueOnce(
+        jsonResponse(LYRICS_RESPONSE),
+      );
+      await new Client().findLyrics({ id: 151738 });
+      expect(mock.mock.calls[0]?.[1]?.headers).toBeUndefined();
+    });
+
+    test("keeps a per-request Lrclib-Client override", async () => {
+      const mock = fetchMock().mockResolvedValueOnce(
+        jsonResponse(LYRICS_RESPONSE),
+      );
+      await new Client({ clientName: "Default" }).findLyrics(
+        { id: 151738 },
+        { headers: { "Lrclib-Client": "Override" } },
+      );
+      expect(
+        new Headers(mock.mock.calls[0]?.[1]?.headers).get("Lrclib-Client"),
+      ).toBe("Override");
+    });
+
+    test("ignores blank names and rejects unsafe ones", () => {
+      expect(() => new Client({ clientName: "   " })).not.toThrow();
+      expect(() => new Client({ clientName: "bad\r\nname" })).toThrow(
+        "printable ASCII",
+      );
+      expect(() => new Client({ clientName: "ação" })).toThrow(
+        "printable ASCII",
+      );
+      expect(() => new Client({ clientName: 7 as never })).toThrow(
+        "clientName must be a string",
+      );
+    });
+  });
+
+  describe("publishLyrics with lyricsfile and instrumental tracks", () => {
+    const TRACK = {
+      trackName: "Track",
+      artistName: "Artist",
+      albumName: "Album",
+      duration: 233_000,
+    };
+
+    function publishBody(mock: jest.SpiedFunction<typeof fetch>): unknown {
+      return JSON.parse(String(mock.mock.calls[0]?.[1]?.body));
+    }
+
+    test("sends a lyricsfile alongside the legacy fields", async () => {
+      const mock = fetchMock().mockResolvedValueOnce(
+        new Response("", { status: 201 }),
+      );
+      await new Client({ key: "token" }).publishLyrics({
+        ...TRACK,
+        lyricsfile: "version: '1.0'",
+        plainLyrics: "Line",
+      });
+
+      expect(publishBody(mock)).toEqual({
+        trackName: "Track",
+        artistName: "Artist",
+        albumName: "Album",
+        duration: 233,
+        plainLyrics: "Line",
+        syncedLyrics: "",
+        lyricsfile: "version: '1.0'",
+      });
+    });
+
+    test("marks a track as instrumental with every lyrics field empty", async () => {
+      const mock = fetchMock().mockResolvedValueOnce(
+        new Response("", { status: 201 }),
+      );
+      await new Client({ key: "token" }).publishLyrics({
+        ...TRACK,
+        instrumental: true,
+      });
+
+      expect(publishBody(mock)).toEqual({
+        trackName: "Track",
+        artistName: "Artist",
+        albumName: "Album",
+        duration: 233,
+        plainLyrics: "",
+        syncedLyrics: "",
+      });
+    });
+
+    test("refuses instrumental tracks that also carry lyrics", async () => {
+      const mock = fetchMock();
+      await expect(
+        new Client({ key: "token" }).publishLyrics({
+          ...TRACK,
+          instrumental: true,
+          plainLyrics: "oops",
+        } as never),
+      ).rejects.toThrow("Instrumental tracks must not include lyrics");
+      expect(mock).not.toHaveBeenCalled();
+    });
+
+    test("still refuses an accidentally empty payload", async () => {
+      const mock = fetchMock();
+      await expect(
+        new Client({ key: "token" }).publishLyrics({
+          ...TRACK,
+          lyricsfile: "  ",
+        }),
+      ).rejects.toThrow("At least one lyrics field must not be empty");
+      expect(mock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("publish token provider", () => {
+    test("asks for a fresh token per request and requires HTTPS", async () => {
+      const mock = fetchMock()
+        .mockResolvedValueOnce(new Response("", { status: 201 }))
+        .mockResolvedValueOnce(new Response("", { status: 200 }));
+      const provider = jest
+        .fn<Promise<string>, []>()
+        .mockResolvedValueOnce("prefix:1")
+        .mockResolvedValueOnce("prefix:2");
+      const client = new Client({ key: provider });
+
+      await client.publishLyrics({
+        trackName: "Track",
+        artistName: "Artist",
+        albumName: "Album",
+        duration: 1_000,
+        plainLyrics: "Lyrics",
+      });
+      await client.flagLyrics({ trackId: 7 });
+
+      expect(provider).toHaveBeenCalledTimes(2);
+      const tokens = mock.mock.calls.map((call) =>
+        new Headers(call[1]?.headers).get("X-Publish-Token"),
+      );
+      expect(tokens).toEqual(["prefix:1", "prefix:2"]);
+
+      expect(
+        () => new Client({ url: "http://example.com/api", key: provider }),
+      ).toThrow("HTTPS is required");
+    });
+
+    test("does not consume a token for invalid input", async () => {
+      const provider = jest.fn<string, []>().mockReturnValue("prefix:1");
+      const client = new Client({ key: provider });
+
+      await expect(
+        client.publishLyrics({
+          trackName: "",
+          artistName: "Artist",
+          albumName: "Album",
+          duration: 1_000,
+          plainLyrics: "Lyrics",
+        }),
+      ).rejects.toBeInstanceOf(TypeError);
+      await expect(client.flagLyrics({ trackId: 0 })).rejects.toBeInstanceOf(
+        RangeError,
+      );
+      expect(provider).not.toHaveBeenCalled();
+    });
+
+    test("rejects an empty token from the provider", async () => {
+      const mock = fetchMock();
+      const client = new Client({ key: () => "   " });
+
+      await expect(client.flagLyrics({ trackId: 7 })).rejects.toMatchObject({
+        name: "KeyError",
+        message: "The publish token provider returned an empty token",
+      });
+      expect(mock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("flagLyrics", () => {
+    test("posts the track ID and reason with a protected token", async () => {
+      const mock = fetchMock().mockResolvedValueOnce(
+        new Response("", { status: 200 }),
+      );
+      const client = new Client({ key: " prefix:nonce " });
+
+      await expect(
+        client.flagLyrics({ trackId: 3396226, content: "  Wrong lyrics  " }),
+      ).resolves.toBeUndefined();
+
+      const [target, init] = mock.mock.calls[0] ?? [];
+      expect(String(target)).toBe("https://lrclib.net/api/flag");
+      expect(init).toMatchObject({ method: "POST", redirect: "error" });
+      expect(new Headers(init?.headers).get("X-Publish-Token")).toBe(
+        "prefix:nonce",
+      );
+      expect(JSON.parse(String(init?.body))).toEqual({
+        trackId: 3396226,
+        content: "Wrong lyrics",
+      });
+    });
+
+    test("omits a blank reason", async () => {
+      const mock = fetchMock().mockResolvedValueOnce(
+        new Response("", { status: 201 }),
+      );
+      await new Client({ key: "token" }).flagLyrics({
+        trackId: 5,
+        content: "   ",
+      });
+      expect(JSON.parse(String(mock.mock.calls[0]?.[1]?.body))).toEqual({
+        trackId: 5,
+      });
+    });
+
+    test("requires a token and a valid track ID", async () => {
+      const mock = fetchMock();
+      await expect(
+        new Client().flagLyrics({ trackId: 1 }),
+      ).rejects.toBeInstanceOf(KeyError);
+
+      const client = new Client({ key: "token" });
+      for (const trackId of [0, -3, 1.5, Number.NaN]) {
+        await expect(client.flagLyrics({ trackId })).rejects.toBeInstanceOf(
+          RangeError,
+        );
+      }
+      await expect(
+        client.flagLyrics({ trackId: 1, content: 5 as never }),
+      ).rejects.toBeInstanceOf(TypeError);
+      expect(mock).not.toHaveBeenCalled();
+    });
+
+    test("throws a structured error for rejected flags", async () => {
+      fetchMock().mockResolvedValueOnce(new Response("no", { status: 400 }));
+      await expect(
+        new Client({ key: "token" }).flagLyrics({ trackId: 1 }),
+      ).rejects.toMatchObject({
+        name: "RequestError",
+        status: 400,
+        url: "https://lrclib.net/api/flag",
+      });
+    });
   });
 });

@@ -9,6 +9,8 @@ type FindLyricsState = {
   metadata?: FindLyricsResponse;
   plainLyrics?: string | null;
   syncedLyrics?: string | null;
+  /** Raw Lyricsfile YAML, when the LRCLIB instance returns one. */
+  lyricsfile?: string | null;
 };
 
 export function useFindLyrics(track: Track) {
@@ -42,6 +44,7 @@ export function useFindLyrics(track: Track) {
           metadata: response,
           plainLyrics: response.plainLyrics,
           syncedLyrics: response.syncedLyrics,
+          lyricsfile: response.lyricsfile ?? null,
         });
       })
       .catch((requestError: unknown) => {
